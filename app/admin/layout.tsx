@@ -48,6 +48,7 @@ export default async function AdminLayout({
       badge: openTickets || undefined,
     },
     { label: "Équipe", href: "/admin/team", icon: "UserCog" },
+    { label: "Mon compte", href: "/admin/settings", icon: "UserCircle" },
   ];
 
   return (
