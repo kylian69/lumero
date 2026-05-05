@@ -37,6 +37,32 @@ function layout(title: string, bodyHtml: string, ctaUrl?: string, ctaLabel?: str
 
 type Template = { subject: string; html: string; text: string };
 
+// ───────────────────────── Invitation ─────────────────────────
+
+export function userInvitationTemplate(args: {
+  inviteUrl: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  invitedByName?: string | null;
+}): Template {
+  const greeting = args.name ? `Bonjour ${escape(args.name)},` : "Bonjour,";
+  const inviter = args.invitedByName
+    ? ` par <strong>${escape(args.invitedByName)}</strong>`
+    : "";
+  const subject = `Vous êtes invité·e à rejoindre Lume`;
+  const html = layout(
+    subject,
+    `<p>${greeting}</p>
+     <p>Vous avez été invité·e${inviter} à créer un compte sur Lume avec le rôle <strong>${escape(args.role)}</strong>.</p>
+     <p>Cliquez sur le bouton ci-dessous pour définir votre mot de passe et activer votre compte. Ce lien expire dans 7 jours.</p>`,
+    args.inviteUrl,
+    "Activer mon compte",
+  );
+  const text = `Vous êtes invité·e à rejoindre Lume (${args.role}).\nActivez votre compte : ${args.inviteUrl}\nCe lien expire dans 7 jours.`;
+  return { subject, html, text };
+}
+
 // ───────────────────────── Prospect ─────────────────────────
 
 export function prospectCreatedTemplate(p: {
