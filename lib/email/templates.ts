@@ -196,3 +196,43 @@ export function ticketMessageToClientTemplate(args: {
   const text = `Réponse de l'équipe Lume sur votre ticket "${args.subject}"\n${url}`;
   return { subject, html, text };
 }
+
+// ───────────────────────── Account ─────────────────────────
+
+export function emailChangeCodeTemplate(args: {
+  code: string;
+  newEmail: string;
+}): Template {
+  const subject = "Confirmez votre nouvelle adresse email";
+  const html = layout(
+    subject,
+    `<p>Vous avez demandé à modifier l'adresse email de votre compte Lume.</p>
+     <p>Voici votre code de confirmation :</p>
+     <p style="font-size:22px;font-weight:700;letter-spacing:4px;background:#f3f3f3;padding:12px 16px;border-radius:6px;display:inline-block;">${escape(args.code)}</p>
+     <p style="color:#666;font-size:12px;">Ce code expire dans 15 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>`,
+  );
+  const text = `Code de confirmation pour ${args.newEmail} : ${args.code} (valable 15 minutes).`;
+  return { subject, html, text };
+}
+
+export function passwordChangedTemplate(): Template {
+  const subject = "Votre mot de passe Lume a été modifié";
+  const html = layout(
+    subject,
+    `<p>Le mot de passe de votre compte Lume vient d'être modifié.</p>
+     <p>Si vous n'êtes pas à l'origine de ce changement, contactez-nous immédiatement.</p>`,
+  );
+  const text = "Le mot de passe de votre compte Lume a été modifié.";
+  return { subject, html, text };
+}
+
+export function emailChangedNotifyTemplate(args: { newEmail: string }): Template {
+  const subject = "Votre adresse email Lume a changé";
+  const html = layout(
+    subject,
+    `<p>L'adresse email de votre compte Lume a été remplacée par <strong>${escape(args.newEmail)}</strong>.</p>
+     <p>Si vous n'êtes pas à l'origine de ce changement, contactez-nous immédiatement.</p>`,
+  );
+  const text = `Votre adresse email a été remplacée par ${args.newEmail}.`;
+  return { subject, html, text };
+}

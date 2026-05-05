@@ -22,11 +22,17 @@ enum Role {
 model User {
   id              String    @id @default(cuid())
   email           String    @unique
+  pendingEmail    String?
   passwordHash    String?
   name            String?
+  firstName       String?
+  lastName        String?
+  avatarUrl       String?
   phone           String?
   role            Role      @default(CLIENT)
   emailVerified   DateTime?
+  twoFactorSecret String?
+  twoFactorEnabled Boolean  @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -40,6 +46,20 @@ model User {
   clientNotes     ClientNote[]          @relation("ClientNotesOnUser")
   clientNotesAuthored ClientNote[]      @relation("ClientNoteAuthor")
   activities      ActivityLog[]
+  verifications   VerificationCode[]
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // "email_change" | "2fa_setup"
+  codeHash  String
+  payload   String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, type])
 }
 
 // ──────────────────────────────────────────────────────────────

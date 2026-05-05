@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function PortalProfilePage() {
+export default async function AdminSettingsPage() {
   const session = await getSession();
   const user = await prisma.user.findUnique({
     where: { id: session!.user.id },
@@ -16,8 +16,8 @@ export default async function PortalProfilePage() {
   return (
     <div>
       <PageHeader
-        title="Mon profil"
-        description={`Compte créé le ${formatDate(user.createdAt)}.`}
+        title="Mon compte"
+        description={`Administrateur depuis le ${formatDate(user.createdAt)}.`}
       />
       <AccountSettings
         user={{
