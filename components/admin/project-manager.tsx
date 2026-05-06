@@ -12,7 +12,9 @@ import {
   Settings2,
   RefreshCw,
   Trash2,
+  Clock,
 } from "lucide-react";
+import { formatRelative } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -30,6 +32,7 @@ type Project = {
   githubRepoUrl: string | null;
   vercelProjectId: string | null;
   previewPublishedAt: Date | null;
+  updatedAt: Date;
 };
 
 type ProjectManagerProps = {
@@ -247,6 +250,10 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                         {p.domain}
                       </span>
                     )}
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      MàJ {formatRelative(p.updatedAt)}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

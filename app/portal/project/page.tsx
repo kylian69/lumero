@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Globe, Palette, Target, Sparkles, Info } from "lucide-react";
+import { Globe, Palette, Target, Sparkles, Info, Clock } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
+import { formatRelative } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProjectSelector } from "@/components/portal/project-selector";
@@ -87,6 +88,10 @@ export default async function PortalProjectPage({
                     {project.domain}
                   </p>
                 )}
+                <p className="flex items-center gap-1.5 text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  Dernière mise à jour : {formatRelative(project.updatedAt)}
+                </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {project.previewUrl &&
