@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { ensureClientUser, logActivity } from "@/lib/accounts";
+import { logActivity } from "@/lib/accounts";
 import { sendEmail } from "@/lib/email/client";
 import { getAdminEmails } from "@/lib/email/recipients";
 import { prospectCreatedTemplate } from "@/lib/email/templates";
@@ -40,20 +40,11 @@ export async function POST(req: Request) {
     }
     const data = parsed.data;
 
-    const account = await ensureClientUser({
-      email: data.email,
-      name: data.entreprise,
-      phone: data.telephone || undefined,
-    });
+    const email = data.email.toLowerCase().trim();
 
-    // Cherche un prospect existant pour cet email / user
+    // Cherche un prospect existant pour cet email
     let prospect = await prisma.prospect.findFirst({
-      where: {
-        OR: [
-          { userId: account.user.id },
-          { email: data.email.toLowerCase() },
-        ],
-      },
+      where: { email },
       include: { questionnaire: true },
     });
 
@@ -61,10 +52,9 @@ export async function POST(req: Request) {
     if (!prospect) {
       prospect = await prisma.prospect.create({
         data: {
-          userId: account.user.id,
           companyName: data.entreprise,
           contactName: data.entreprise,
-          email: data.email.toLowerCase(),
+          email,
           phone: data.telephone || null,
           status: "NEW",
           source: "QUESTIONNAIRE",
@@ -77,11 +67,6 @@ export async function POST(req: Request) {
         entityId: prospect.id,
         action: "created",
         metadata: { source: "questionnaire" },
-      });
-    } else if (!prospect.userId) {
-      await prisma.prospect.update({
-        where: { id: prospect.id },
-        data: { userId: account.user.id },
       });
     }
 
@@ -116,7 +101,6 @@ export async function POST(req: Request) {
     }
 
     await logActivity({
-      userId: account.user.id,
       entityType: "prospect",
       entityId: prospect.id,
       action: "questionnaire_submitted",
@@ -139,8 +123,6 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       prospectId: prospect.id,
-      newAccount: !!account.tempPassword,
-      tempPassword: account.tempPassword,
     });
   } catch (err) {
     console.error("[/api/questionnaire]", err);

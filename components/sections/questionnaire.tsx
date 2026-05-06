@@ -211,10 +211,7 @@ export function Questionnaire() {
   const [answers, setAnswers] = React.useState<Answers>(EMPTY);
   const [showAllMetiers, setShowAllMetiers] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
-  const [submitResult, setSubmitResult] = React.useState<{
-    newAccount: boolean;
-    tempPassword: string | null;
-  } | null>(null);
+  const [submitResult, setSubmitResult] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     if (METIERS_MORE.some((m) => m.id === answers.metier)) {
@@ -318,7 +315,7 @@ export function Questionnaire() {
     setProgress(0);
     setDone(false);
     setSubmitError(null);
-    setSubmitResult(null);
+    setSubmitResult(false);
     const start = Date.now();
     const duration = 2800;
     let cancelled = false;
@@ -342,10 +339,7 @@ export function Questionnaire() {
         if (!res.ok) {
           setSubmitError(data?.error || "Erreur lors de l'envoi.");
         } else {
-          setSubmitResult({
-            newAccount: !!data.newAccount,
-            tempPassword: data.tempPassword ?? null,
-          });
+          setSubmitResult(true);
         }
       } catch {
         if (!cancelled) setSubmitError("Connexion impossible. Réessayez.");
@@ -1079,35 +1073,6 @@ export function Questionnaire() {
                           heures.
                         </p>
 
-                        {submitResult?.newAccount && submitResult.tempPassword && (
-                          <div className="mt-6 w-full max-w-md rounded-2xl border border-primary/20 bg-primary/5 p-4 text-left">
-                            <p className="text-sm font-semibold text-foreground">
-                              Votre espace client est actif
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              Identifiants temporaires — pensez à changer votre
-                              mot de passe à la première connexion.
-                            </p>
-                            <div className="mt-3 space-y-1.5 rounded-lg bg-background/60 p-3 text-xs">
-                              <div>
-                                <span className="text-muted-foreground">
-                                  Email :{" "}
-                                </span>
-                                <span className="font-medium">
-                                  {answers.email}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">
-                                  Mot de passe :{" "}
-                                </span>
-                                <span className="font-mono font-medium">
-                                  {submitResult.tempPassword}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
 
                         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
                           <Button size="lg" asChild>
