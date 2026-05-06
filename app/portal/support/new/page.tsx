@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getSession } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,9 +12,23 @@ export const dynamic = "force-dynamic";
 export default async function NewTicketPage({
   searchParams,
 }: {
-  searchParams: Promise<{ topic?: string; subject?: string }>;
+  searchParams: Promise<{ topic?: string; subject?: string; projectId?: string }>;
 }) {
-  const { topic, subject } = await searchParams;
+  const session = await getSession();
+  const userId = session!.user.id;
+  const { topic, subject, projectId } = await searchParams;
+
+  const projects = await prisma.project.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, name: true },
+  });
+
+  const defaultProjectId =
+    projectId && projects.some((p) => p.id === projectId)
+      ? projectId
+      : projects[0]?.id;
+
   return (
     <div>
       <PageHeader
@@ -40,6 +56,8 @@ export default async function NewTicketPage({
             <NewTicketForm
               initialCategory={topic || "AUTRE"}
               initialSubject={subject || ""}
+              projects={projects}
+              defaultProjectId={defaultProjectId}
             />
           </CardContent>
         </Card>

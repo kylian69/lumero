@@ -16,18 +16,27 @@ const CATEGORIES = [
   { id: "AUTRE", label: "Autre" },
 ];
 
+type ProjectOption = { id: string; name: string };
+
 export function NewTicketForm({
   initialCategory,
   initialSubject,
+  projects = [],
+  defaultProjectId,
 }: {
   initialCategory: string;
   initialSubject: string;
+  projects?: ProjectOption[];
+  defaultProjectId?: string;
 }) {
   const router = useRouter();
   const [subject, setSubject] = React.useState(initialSubject);
   const [category, setCategory] = React.useState(initialCategory);
   const [priority, setPriority] = React.useState("NORMAL");
   const [content, setContent] = React.useState("");
+  const [projectId, setProjectId] = React.useState(
+    defaultProjectId ?? projects[0]?.id ?? "",
+  );
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -38,7 +47,13 @@ export function NewTicketForm({
     const res = await fetch("/api/portal/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subject, category, priority, content }),
+      body: JSON.stringify({
+        subject,
+        category,
+        priority,
+        content,
+        projectId: projectId || undefined,
+      }),
     });
     const data = await res.json();
     setSubmitting(false);
@@ -51,6 +66,22 @@ export function NewTicketForm({
 
   return (
     <form onSubmit={submit} className="space-y-4">
+      {projects.length > 1 && (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium">Projet concerné</label>
+          <Select
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+          >
+            <option value="">— Aucun projet spécifique —</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
       <div>
         <label className="mb-1.5 block text-sm font-medium">Sujet</label>
         <Input

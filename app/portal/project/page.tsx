@@ -8,15 +8,21 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ProjectSelector } from "@/components/portal/project-selector";
 
 export const dynamic = "force-dynamic";
 
-export default async function PortalProjectPage() {
+export default async function PortalProjectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ projectId?: string }>;
+}) {
   const session = await getSession();
   const userId = session!.user.id;
+  const { projectId } = await searchParams;
 
-  const [project, prospect] = await Promise.all([
-    prisma.project.findFirst({
+  const [projects, prospect] = await Promise.all([
+    prisma.project.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
     }),
@@ -25,6 +31,9 @@ export default async function PortalProjectPage() {
       include: { questionnaire: true },
     }),
   ]);
+
+  const project =
+    projects.find((p) => p.id === projectId) ?? projects[0] ?? null;
 
   let objectifs: string[] = [];
   let fonctionnalites: string[] = [];
@@ -37,12 +46,25 @@ export default async function PortalProjectPage() {
     }
   }
 
+  const projectOptions = projects.map((p) => ({
+    id: p.id,
+    name: p.name,
+    status: p.status,
+  }));
+
   return (
     <div>
       <PageHeader
-        title="Mon site"
-        description="Retrouvez ici toutes les informations de votre site et de votre brief."
+        title="Mes sites"
+        description="Retrouvez ici toutes les informations de vos sites et de votre brief."
       />
+
+      {projects.length > 1 && (
+        <ProjectSelector
+          projects={projectOptions}
+          selectedId={project?.id ?? ""}
+        />
+      )}
 
       {project ? (
         <Card className="mb-6">
@@ -80,7 +102,7 @@ export default async function PortalProjectPage() {
                     </Button>
                   )}
                 <Button size="sm" asChild>
-                  <Link href="/portal/customization">
+                  <Link href={`/portal/customization?projectId=${project.id}`}>
                     <Sparkles className="h-4 w-4" /> Demander une modification
                   </Link>
                 </Button>
@@ -168,7 +190,7 @@ export default async function PortalProjectPage() {
             <p className="border-t border-border/50 pt-3 text-xs text-muted-foreground">
               Une information à modifier ?{" "}
               <Link
-                href="/portal/customization"
+                href={`/portal/customization${project ? `?projectId=${project.id}` : ""}`}
                 className="font-medium text-primary hover:underline"
               >
                 Envoyez-nous une demande →

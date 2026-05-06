@@ -9,13 +9,32 @@ import { formatDateTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function PortalCustomizationPage() {
+export default async function PortalCustomizationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ projectId?: string }>;
+}) {
   const session = await getSession();
   const userId = session!.user.id;
-  const requests = await prisma.customizationRequest.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-  });
+  const { projectId } = await searchParams;
+
+  const [requests, projects] = await Promise.all([
+    prisma.customizationRequest.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: { project: { select: { name: true } } },
+    }),
+    prisma.project.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  const defaultProjectId =
+    projectId && projects.some((p) => p.id === projectId)
+      ? projectId
+      : projects[0]?.id;
 
   return (
     <div>
@@ -34,7 +53,10 @@ export default async function PortalCustomizationPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CustomizationForm />
+              <CustomizationForm
+                projects={projects}
+                defaultProjectId={defaultProjectId}
+              />
             </CardContent>
           </Card>
         </div>
@@ -62,6 +84,11 @@ export default async function PortalCustomizationPage() {
                         <p className="text-sm font-medium">{r.title}</p>
                         <StatusBadge kind="customization" value={r.status} />
                       </div>
+                      {projects.length > 1 && r.project && (
+                        <p className="mt-1 text-xs text-primary/70">
+                          {r.project.name}
+                        </p>
+                      )}
                       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                         {r.description}
                       </p>
