@@ -249,6 +249,19 @@ model Project {
   primaryColor    String?
   logoUrl         String?
 
+  // GitHub
+  githubRepoName      String?
+  githubRepoUrl       String?
+  githubDefaultBranch String   @default("main")
+  githubPreviewBranch String   @default("preview")
+
+  // Vercel
+  vercelProjectId     String?
+
+  // Delivery — previewStatus values: NONE | PROVISIONING | READY | REVIEW_SENT
+  previewStatus       String   @default("NONE")
+  previewPublishedAt  DateTime?
+
   subscriptions   Subscription[]
   customizations  CustomizationRequest[]
   tickets         SupportTicket[]

@@ -262,3 +262,26 @@ export function emailChangedNotifyTemplate(args: { newEmail: string }): Template
   const text = `Votre adresse email a été remplacée par ${args.newEmail}.`;
   return { subject, html, text };
 }
+
+// ───────────────────────── Preview publiée → client ─────────────────────────
+
+export function previewPublishedTemplate(args: {
+  clientName?: string | null;
+  projectName: string;
+  previewUrl: string;
+}): Template {
+  const portalUrl = `${appUrl()}/portal`;
+  const greeting = args.clientName ? `Bonjour ${escape(args.clientName)},` : "Bonjour,";
+  const subject = `Votre aperçu est prêt — ${args.projectName}`;
+  const html = layout(
+    subject,
+    `<p>${greeting}</p>
+     <p>Bonne nouvelle ! Une première version de votre site <strong>${escape(args.projectName)}</strong> est maintenant disponible en aperçu.</p>
+     <p>Consultez-la et faites-nous part de vos retours directement depuis votre espace client.</p>
+     <p style="margin:4px 0;"><a href="${escape(args.previewUrl)}" style="color:#555;font-size:13px;">${escape(args.previewUrl)}</a></p>`,
+    portalUrl,
+    "Voir mon aperçu",
+  );
+  const text = `${greeting}\n\nVotre aperçu "${args.projectName}" est prêt !\n\nConsultez-le : ${args.previewUrl}\n\nConnectez-vous à votre espace client pour nous faire part de vos retours : ${portalUrl}`;
+  return { subject, html, text };
+}

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Globe, Sparkles, LifeBuoy } from "lucide-react";
+import { ArrowLeft, Calendar, Sparkles, LifeBuoy } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { formatDate, formatDateTime, formatEUR } from "@/lib/format";
 import { ActivityTimeline } from "@/components/admin/activity-timeline";
 import { getClientActivity } from "@/lib/activity";
 import { ClientContactEditor, ClientNotes } from "@/components/admin/client-detail";
+import { ProjectManager } from "@/components/admin/project-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,22 @@ export default async function ClientDetailPage({
   const client = await prisma.user.findUnique({
     where: { id },
     include: {
-      projects: { orderBy: { createdAt: "desc" } },
+      projects: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          status: true,
+          planType: true,
+          domain: true,
+          previewUrl: true,
+          previewStatus: true,
+          githubRepoUrl: true,
+          vercelProjectId: true,
+          previewPublishedAt: true,
+        },
+      },
       subscriptions: { orderBy: { createdAt: "desc" } },
       tickets: {
         orderBy: { updatedAt: "desc" },
@@ -64,50 +80,7 @@ export default async function ClientDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Projets & sites</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {client.projects.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Aucun projet associé à ce compte.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {client.projects.map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold">{p.name}</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <StatusBadge kind="project" value={p.status} />
-                          <span className="rounded-full bg-background px-2 py-0.5 font-medium text-foreground">
-                            {p.planType}
-                          </span>
-                          {p.domain && (
-                            <span className="inline-flex items-center gap-1">
-                              <Globe className="h-3 w-3" />
-                              {p.domain}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {p.previewUrl && (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={p.previewUrl} target="_blank" rel="noreferrer">
-                            Aperçu
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ProjectManager clientId={client.id} projects={client.projects} />
 
           <Card>
             <CardHeader>

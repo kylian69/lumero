@@ -106,19 +106,35 @@ export default async function PortalHome() {
                       </span>
                     )}
                   </div>
+                  {(project.status === "BRIEF" || project.status === "DESIGN") && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Votre site est en cours de conception. Vous serez notifié dès qu'un aperçu sera disponible.
+                    </p>
+                  )}
+                  {project.status === "DEVELOPMENT" && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Votre site est en cours de développement. Un aperçu sera bientôt disponible.
+                    </p>
+                  )}
+                  {project.status === "REVIEW" && project.previewUrl && (
+                    <p className="mt-2 text-sm font-medium text-primary">
+                      Votre aperçu est prêt ! Consultez-le et faites-nous part de vos retours.
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {project.previewUrl && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a
-                        href={project.previewUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Aperçu
-                      </a>
-                    </Button>
-                  )}
+                  {project.previewUrl &&
+                    (project.status === "REVIEW" || project.status === "LIVE") && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a
+                          href={project.previewUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Voir mon aperçu
+                        </a>
+                      </Button>
+                    )}
                   <Button size="sm" asChild>
                     <Link href="/portal/project">Gérer mon site</Link>
                   </Button>

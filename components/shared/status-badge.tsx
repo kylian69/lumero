@@ -51,7 +51,14 @@ const PROJECT: Record<string, { label: string; variant: BadgeProps["variant"] }>
   ARCHIVED: { label: "Archivé", variant: "neutral" },
 };
 
-type Kind = "prospect" | "ticket" | "priority" | "customization" | "subscription" | "project";
+const PREVIEW_STATUS: Record<string, { label: string; variant: BadgeProps["variant"] }> = {
+  NONE: { label: "Non configuré", variant: "neutral" },
+  PROVISIONING: { label: "En déploiement", variant: "warning" },
+  READY: { label: "Aperçu prêt", variant: "info" },
+  REVIEW_SENT: { label: "Envoyé au client", variant: "success" },
+};
+
+type Kind = "prospect" | "ticket" | "priority" | "customization" | "subscription" | "project" | "previewStatus";
 
 const MAPS: Record<Kind, Record<string, { label: string; variant: BadgeProps["variant"] }>> = {
   prospect: PROSPECT,
@@ -60,6 +67,7 @@ const MAPS: Record<Kind, Record<string, { label: string; variant: BadgeProps["va
   customization: CUSTOM,
   subscription: SUBSCRIPTION,
   project: PROJECT,
+  previewStatus: PREVIEW_STATUS,
 };
 
 export function StatusBadge({
