@@ -246,7 +246,7 @@ function FormShell({
   onSubmit,
   loading,
   submitLabel,
-  submitVariant,
+  submitClassName,
 }: {
   title: string;
   description?: string;
