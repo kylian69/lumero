@@ -58,7 +58,7 @@ export function ProjectSelector({
         <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </Button>
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[220px] rounded-xl border border-border bg-popover shadow-lg">
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-[220px] rounded-xl border border-border bg-background shadow-lg">
           <p className="border-b border-border px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Mes projets ({projects.length})
           </p>
