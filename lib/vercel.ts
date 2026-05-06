@@ -57,3 +57,34 @@ export async function registerVercelWebhook(projectId: string): Promise<void> {
     }),
   });
 }
+
+type VercelDeployment = {
+  uid: string;
+  url: string;
+  state: string;
+  meta?: { githubCommitRef?: string };
+  createdAt: number;
+};
+
+export async function getLatestPreviewDeployment(
+  projectId: string
+): Promise<{ url: string; state: string } | null> {
+  const teamId = process.env.VERCEL_TEAM_ID;
+  const params = new URLSearchParams({ projectId, limit: "20" });
+  if (teamId) params.set("teamId", teamId);
+
+  const data = await vercelFetch(`/v6/deployments?${params.toString()}`);
+  const deployments = (data?.deployments ?? []) as VercelDeployment[];
+
+  // Find the most recent deployment from the "preview" branch
+  const previewDeployment = deployments.find(
+    (d) => d.meta?.githubCommitRef === "preview"
+  );
+
+  if (!previewDeployment) return null;
+
+  return {
+    url: `https://${previewDeployment.url}`,
+    state: previewDeployment.state,
+  };
+}

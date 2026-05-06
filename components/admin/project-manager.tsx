@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Send,
   Settings2,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,6 +93,31 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
         router.refresh();
       } else {
         setMsg(projectId, data.error ?? "Erreur lors du provisionnement");
+      }
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
+  async function syncPreview(projectId: string) {
+    setLoadingId(projectId);
+    try {
+      const res = await fetch(`/api/admin/projects/${projectId}/sync`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === projectId
+              ? { ...p, previewStatus: data.project.previewStatus, previewUrl: data.project.previewUrl }
+              : p
+          )
+        );
+        setMsg(projectId, "Aperçu synchronisé depuis Vercel.");
+        router.refresh();
+      } else {
+        setMsg(projectId, data.error ?? data.message ?? "Erreur lors de la synchronisation");
       }
     } finally {
       setLoadingId(null);
@@ -243,10 +269,27 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                 )}
 
                 {p.previewStatus === "PROVISIONING" && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    En attente du premier déploiement Vercel…
-                  </div>
+                  <>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      En attente du premier déploiement Vercel…
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => syncPreview(p.id)}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4" />
+                          Synchroniser
+                        </>
+                      )}
+                    </Button>
+                  </>
                 )}
 
                 {p.previewStatus === "READY" && (
@@ -259,6 +302,14 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                         </a>
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => syncPreview(p.id)}
+                      disabled={loading}
+                    >
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    </Button>
                     <Button
                       size="sm"
                       onClick={() => publishPreview(p.id)}
@@ -286,6 +337,14 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                         </a>
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => syncPreview(p.id)}
+                      disabled={loading}
+                    >
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    </Button>
                     <Badge variant="success" className="text-xs">
                       Envoyé au client
                     </Badge>
