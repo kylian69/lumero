@@ -88,7 +88,7 @@ export function AppShell({
             open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           )}
         >
-          <div className="flex h-full flex-col overflow-y-auto">
+          <div className="flex h-full flex-col">
             <div className="hidden items-center gap-2 px-6 py-6 md:flex">
               <Link href="/" className="inline-flex items-center gap-2">
                 <Logo />
@@ -99,7 +99,7 @@ export function AppShell({
                 {title}
               </p>
             </div>
-            <nav className="flex-1 space-y-1 px-4">
+            <nav className="flex-1 overflow-y-auto space-y-1 px-4">
               {items.map((item) => {
                 const active = isActive(item.href, item.exact);
                 const Icon = iconMap[item.icon] || LayoutDashboard;
