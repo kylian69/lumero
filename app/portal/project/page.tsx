@@ -67,17 +67,18 @@ export default async function PortalProjectPage() {
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
-                {project.previewUrl && (
-                  <Button variant="outline" size="sm" asChild>
-                    <a
-                      href={project.previewUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Voir la preview
-                    </a>
-                  </Button>
-                )}
+                {project.previewUrl &&
+                  (project.status === "REVIEW" || project.status === "LIVE") && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a
+                        href={project.previewUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Voir mon aperçu
+                      </a>
+                    </Button>
+                  )}
                 <Button size="sm" asChild>
                   <Link href="/portal/customization">
                     <Sparkles className="h-4 w-4" /> Demander une modification
