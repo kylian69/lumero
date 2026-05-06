@@ -36,7 +36,7 @@ export function Footer() {
         </nav>
       </div>
       <p className="container mt-8 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Lume. Tous droits réservés.
+        © {new Date().getFullYear()} Lumero. Tous droits réservés.
       </p>
     </footer>
   );

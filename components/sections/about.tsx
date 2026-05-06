@@ -41,7 +41,7 @@ export function About() {
             Nous créons des sites qui travaillent pour vous.
           </h2>
           <p className="mt-6 text-muted-foreground leading-relaxed">
-            Lume rassemble des experts en design produit, ingénierie web et SEO.
+            Lumero rassemble des experts en design produit, ingénierie web et SEO.
             Nous combinons des modèles rigoureusement conçus à une automatisation
             intelligente pour livrer des sites qui convertissent, sans compromis
             sur la qualité.

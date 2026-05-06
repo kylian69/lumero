@@ -15,7 +15,7 @@ export function Logo({ className }: { className?: string }) {
         <span className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/20 to-transparent" />
         <span className="relative text-sm font-bold">L</span>
       </span>
-      Lume
+      Lumero
     </span>
   );
 }

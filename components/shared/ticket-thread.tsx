@@ -329,7 +329,7 @@ function Composer({
             placeholder={
               scope === "admin"
                 ? "Écrire une réponse au client (markdown supporté)…"
-                : "Répondre à l'équipe Lume (markdown supporté)…"
+                : "Répondre à l'équipe Lumero (markdown supporté)…"
             }
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -632,7 +632,7 @@ export function TicketThread({
                   {m.author.name || m.author.email}
                   {isStaff && (
                     <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
-                      Équipe Lume
+                      Équipe Lumero
                     </span>
                   )}
                 </span>

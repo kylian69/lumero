@@ -11,10 +11,10 @@ export default function HomePage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Lume",
-    url: "https://lume.studio",
+    name: "Lumero",
+    url: "https://lumero.fr",
     description:
-      "Lume est une plateforme Website-as-a-Service qui livre un site professionnel optimisé SEO en moins de 24 heures.",
+      "Lumero est une plateforme Website-as-a-Service qui livre un site professionnel optimisé SEO en moins de 24 heures.",
     sameAs: [],
     offers: [
       {

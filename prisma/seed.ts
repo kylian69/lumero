@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@lume.studio";
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@lumero.fr";
   const adminPassword = process.env.ADMIN_PASSWORD || "admin1234";
 
   const admin = await prisma.user.upsert({
@@ -13,7 +13,7 @@ async function main() {
     update: {},
     create: {
       email: adminEmail,
-      name: "Équipe Lume",
+      name: "Équipe Lumero",
       role: "ADMIN",
       passwordHash: await bcrypt.hash(adminPassword, 10),
     },
@@ -21,7 +21,7 @@ async function main() {
   console.log(`✔ Admin : ${admin.email} (mdp: ${adminPassword})`);
 
   // Client démo
-  const clientEmail = "demo@lume.studio";
+  const clientEmail = "demo@lumero.fr";
   const clientPassword = "demo1234";
   const client = await prisma.user.upsert({
     where: { email: clientEmail },
@@ -86,7 +86,7 @@ async function main() {
       name: "Atelier Rivière",
       slug: "atelier-riviere",
       domain: "atelier-riviere.fr",
-      previewUrl: "https://preview.lume.studio/atelier-riviere",
+      previewUrl: "https://preview.lumero.fr/atelier-riviere",
       status: "LIVE",
       planType: "STANDARD",
       primaryColor: "#8B5CF6",

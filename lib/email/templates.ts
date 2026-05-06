@@ -27,7 +27,7 @@ function layout(title: string, bodyHtml: string, ctaUrl?: string, ctaLabel?: str
           <h1 style="margin:0 0 16px;font-size:18px;color:#111;">${escape(title)}</h1>
           <div style="font-size:14px;line-height:1.6;color:#333;">${bodyHtml}</div>
           ${cta}
-          <p style="margin-top:32px;color:#888;font-size:12px;">— Lume</p>
+          <p style="margin-top:32px;color:#888;font-size:12px;">— Lumero</p>
         </td></tr>
       </table>
     </td></tr>
@@ -213,13 +213,13 @@ export function ticketMessageToClientTemplate(args: {
   const subject = `Réponse à votre ticket — ${args.subject}`;
   const html = layout(
     subject,
-    `<p>L'équipe Lume vient de répondre à votre ticket <strong>${escape(args.subject)}</strong>.</p>
+    `<p>L'équipe Lumero vient de répondre à votre ticket <strong>${escape(args.subject)}</strong>.</p>
      <p><strong>Message :</strong></p>
      <p style="white-space:pre-wrap;background:#f6f6f6;padding:12px;border-radius:6px;">${escape(args.content)}</p>`,
     url,
     "Voir le ticket",
   );
-  const text = `Réponse de l'équipe Lume sur votre ticket "${args.subject}"\n${url}`;
+  const text = `Réponse de l'équipe Lumero sur votre ticket "${args.subject}"\n${url}`;
   return { subject, html, text };
 }
 
@@ -232,7 +232,7 @@ export function emailChangeCodeTemplate(args: {
   const subject = "Confirmez votre nouvelle adresse email";
   const html = layout(
     subject,
-    `<p>Vous avez demandé à modifier l'adresse email de votre compte Lume.</p>
+    `<p>Vous avez demandé à modifier l'adresse email de votre compte Lumero.</p>
      <p>Voici votre code de confirmation :</p>
      <p style="font-size:22px;font-weight:700;letter-spacing:4px;background:#f3f3f3;padding:12px 16px;border-radius:6px;display:inline-block;">${escape(args.code)}</p>
      <p style="color:#666;font-size:12px;">Ce code expire dans 15 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>`,
@@ -242,21 +242,21 @@ export function emailChangeCodeTemplate(args: {
 }
 
 export function passwordChangedTemplate(): Template {
-  const subject = "Votre mot de passe Lume a été modifié";
+  const subject = "Votre mot de passe Lumero a été modifié";
   const html = layout(
     subject,
-    `<p>Le mot de passe de votre compte Lume vient d'être modifié.</p>
+    `<p>Le mot de passe de votre compte Lumero vient d'être modifié.</p>
      <p>Si vous n'êtes pas à l'origine de ce changement, contactez-nous immédiatement.</p>`,
   );
-  const text = "Le mot de passe de votre compte Lume a été modifié.";
+  const text = "Le mot de passe de votre compte Lumero a été modifié.";
   return { subject, html, text };
 }
 
 export function emailChangedNotifyTemplate(args: { newEmail: string }): Template {
-  const subject = "Votre adresse email Lume a changé";
+  const subject = "Votre adresse email Lumero a changé";
   const html = layout(
     subject,
-    `<p>L'adresse email de votre compte Lume a été remplacée par <strong>${escape(args.newEmail)}</strong>.</p>
+    `<p>L'adresse email de votre compte Lumero a été remplacée par <strong>${escape(args.newEmail)}</strong>.</p>
      <p>Si vous n'êtes pas à l'origine de ce changement, contactez-nous immédiatement.</p>`,
   );
   const text = `Votre adresse email a été remplacée par ${args.newEmail}.`;

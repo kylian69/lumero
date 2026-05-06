@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       where: { id: user.id },
       data: { twoFactorSecret: secret },
     });
-    const otpauth = buildOtpAuthUrl({ secret, label: user.email, issuer: "Lume" });
+    const otpauth = buildOtpAuthUrl({ secret, label: user.email, issuer: "Lumero" });
     return NextResponse.json({ ok: true, secret, otpauth });
   }
 

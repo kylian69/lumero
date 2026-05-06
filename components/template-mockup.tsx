@@ -178,7 +178,7 @@ function RestaurateurMockup() {
   return (
     <>
       <SiteHeader
-        brand="Le Lume"
+        brand="Le Lumero"
         links={["Carte", "Réserver", "Contact"]}
         cta="Réserver"
         accent="bg-amber-500"
@@ -239,7 +239,7 @@ function ArtisanMockup() {
   return (
     <>
       <SiteHeader
-        brand="Atelier Lume"
+        brand="Atelier Lumero"
         links={["Réalisations", "Métier", "Devis"]}
         cta="Devis"
         accent="bg-zinc-700"
@@ -289,7 +289,7 @@ function ConsultantMockup() {
   return (
     <>
       <SiteHeader
-        brand="Lume Conseil"
+        brand="Lumero Conseil"
         links={["Expertises", "Cas clients", "À propos"]}
         cta="Échanger"
         accent="bg-indigo-600"
@@ -355,7 +355,7 @@ function SanteMockup() {
   return (
     <>
       <SiteHeader
-        brand="Cabinet Lume"
+        brand="Cabinet Lumero"
         links={["Praticien", "Soins", "Accès"]}
         cta="Prendre RDV"
         accent="bg-emerald-600"
@@ -425,7 +425,7 @@ function CoachMockup() {
   return (
     <>
       <SiteHeader
-        brand="Lume Academy"
+        brand="Lumero Academy"
         links={["Programmes", "Avis", "Méthode"]}
         cta="Réserver"
         accent="bg-violet-600"
@@ -491,7 +491,7 @@ function CabinetMockup() {
   return (
     <>
       <SiteHeader
-        brand="Cabinet Lume"
+        brand="Cabinet Lumero"
         links={["Expertises", "Cabinet", "Honoraires"]}
         cta="Prendre RDV"
         accent="bg-stone-700"
@@ -553,7 +553,7 @@ function AcademyMockup() {
   return (
     <>
       <SiteHeader
-        brand="Lume Academy"
+        brand="Lumero Academy"
         links={["Catalogue", "Mentors", "Avis"]}
         cta="Commencer"
         accent="bg-violet-600"
@@ -679,7 +679,7 @@ function StudioMockup() {
   return (
     <>
       <SiteHeader
-        brand="Salon Lume"
+        brand="Salon Lumero"
         links={["Carte", "Équipe", "Avis"]}
         cta="Réserver"
         accent="bg-fuchsia-600"
@@ -744,7 +744,7 @@ function ImmobilierMockup() {
   return (
     <>
       <SiteHeader
-        brand="Lume Immo"
+        brand="Lumero Immo"
         links={["Annonces", "Estimer", "Contact"]}
         cta="Estimer"
         accent="bg-sky-600"
