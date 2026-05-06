@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import {
+  MessageComposer,
+  type DraftAttachment,
+} from "@/components/shared/message-composer";
 
 const CATEGORIES = [
   { id: "contenu", label: "Texte & contenu" },
@@ -28,6 +31,7 @@ export function CustomizationForm({
   const router = useRouter();
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
+  const [attachments, setAttachments] = React.useState<DraftAttachment[]>([]);
   const [category, setCategory] = React.useState("contenu");
   const [priority, setPriority] = React.useState("NORMAL");
   const [projectId, setProjectId] = React.useState(
@@ -38,6 +42,10 @@ export function CustomizationForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (description.trim().length < 5) {
+      setResult("err");
+      return;
+    }
     setSubmitting(true);
     setResult(null);
     const res = await fetch("/api/portal/customization", {
@@ -49,12 +57,14 @@ export function CustomizationForm({
         category,
         priority,
         projectId: projectId || undefined,
+        attachments,
       }),
     });
     setSubmitting(false);
     if (res.ok) {
       setTitle("");
       setDescription("");
+      setAttachments([]);
       setCategory("contenu");
       setPriority("NORMAL");
       setResult("ok");
@@ -70,10 +80,7 @@ export function CustomizationForm({
       {projects.length > 1 && (
         <div>
           <label className="mb-1.5 block text-sm font-medium">Projet concerné</label>
-          <Select
-            value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-          >
+          <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -83,9 +90,7 @@ export function CustomizationForm({
         </div>
       )}
       <div>
-        <label className="mb-1.5 block text-sm font-medium">
-          Titre de la demande
-        </label>
+        <label className="mb-1.5 block text-sm font-medium">Titre de la demande</label>
         <Input
           required
           value={title}
@@ -96,10 +101,7 @@ export function CustomizationForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-sm font-medium">Catégorie</label>
-          <Select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
+          <Select value={category} onChange={(e) => setCategory(e.target.value)}>
             {CATEGORIES.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.label}
@@ -109,10 +111,7 @@ export function CustomizationForm({
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium">Priorité</label>
-          <Select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-          >
+          <Select value={priority} onChange={(e) => setPriority(e.target.value)}>
             <option value="LOW">Faible</option>
             <option value="NORMAL">Normale</option>
             <option value="HIGH">Haute</option>
@@ -120,15 +119,16 @@ export function CustomizationForm({
         </div>
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-medium">
-          Description détaillée
-        </label>
-        <Textarea
-          required
-          rows={5}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Décrivez précisément ce que vous souhaitez modifier. Plus vous êtes précis, plus on est rapide !"
+        <label className="mb-1.5 block text-sm font-medium">Description détaillée</label>
+        <MessageComposer
+          uploadEndpoint="/api/uploads/draft"
+          content={description}
+          onContentChange={setDescription}
+          attachments={attachments}
+          onAttachmentsChange={setAttachments}
+          placeholder="Décrivez précisément ce que vous souhaitez modifier (markdown supporté)…"
+          hideSendButton
+          minRows={5}
         />
       </div>
       {result === "ok" && (

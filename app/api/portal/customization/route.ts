@@ -7,12 +7,20 @@ import { sendEmail } from "@/lib/email/client";
 import { getAdminEmails } from "@/lib/email/recipients";
 import { customizationCreatedTemplate } from "@/lib/email/templates";
 
+const attachmentInput = z.object({
+  filename: z.string().min(1),
+  mimeType: z.string().min(1),
+  size: z.number().int().nonnegative(),
+  storageKey: z.string().min(1),
+});
+
 const schema = z.object({
   title: z.string().min(3),
   description: z.string().min(5),
   category: z.string().optional(),
   priority: z.enum(["LOW", "NORMAL", "HIGH"]).default("NORMAL"),
   projectId: z.string().optional(),
+  attachments: z.array(attachmentInput).optional(),
 });
 
 export async function POST(req: Request) {
@@ -36,6 +44,24 @@ export async function POST(req: Request) {
       description: d.description,
       category: d.category ?? null,
       priority: d.priority,
+      messages: {
+        create: {
+          authorId: session.user.id,
+          content: d.description,
+          ...(d.attachments?.length
+            ? {
+                attachments: {
+                  create: d.attachments.map((a) => ({
+                    filename: a.filename,
+                    mimeType: a.mimeType,
+                    size: a.size,
+                    storageKey: a.storageKey,
+                  })),
+                },
+              }
+            : {}),
+        },
+      },
     },
   });
   await logActivity({

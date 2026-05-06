@@ -42,6 +42,7 @@ model User {
   tickets         SupportTicket[]       @relation("TicketAuthor")
   ticketMessages  TicketMessage[]
   customizations  CustomizationRequest[]
+  customizationMessages CustomizationMessage[]
   notesAuthored   ProspectNote[]        @relation("NoteAuthor")
   clientNotes     ClientNote[]          @relation("ClientNotesOnUser")
   clientNotesAuthored ClientNote[]      @relation("ClientNoteAuthor")
@@ -339,12 +340,44 @@ model CustomizationRequest {
   priority    CustomizationPriority @default(NORMAL)
   status      CustomizationStatus   @default(SUBMITTED)
 
+  messages    CustomizationMessage[]
+
   completedAt DateTime?
   createdAt   DateTime              @default(now())
   updatedAt   DateTime              @updatedAt
 
   @@index([userId])
   @@index([status])
+}
+
+model CustomizationMessage {
+  id          String               @id @default(cuid())
+  requestId   String
+  request     CustomizationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content     String
+  isInternal  Boolean              @default(false)
+  createdAt   DateTime             @default(now())
+  editedAt    DateTime?
+  deletedAt   DateTime?
+  deletedById String?
+  attachments CustomizationAttachment[]
+
+  @@index([requestId])
+}
+
+model CustomizationAttachment {
+  id         String               @id @default(cuid())
+  messageId  String
+  message    CustomizationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  filename   String
+  mimeType   String
+  size       Int
+  storageKey String
+  createdAt  DateTime             @default(now())
+
+  @@index([messageId])
 }
 
 // ──────────────────────────────────────────────────────────────

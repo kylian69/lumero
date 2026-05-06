@@ -8,6 +8,13 @@ import { getAdminEmails } from "@/lib/email/recipients";
 import { ticketMessageToAdminsTemplate } from "@/lib/email/templates";
 import { nextTicketNumber } from "@/lib/ticket-number";
 
+const attachmentInput = z.object({
+  filename: z.string().min(1),
+  mimeType: z.string().min(1),
+  size: z.number().int().nonnegative(),
+  storageKey: z.string().min(1),
+});
+
 const createSchema = z.object({
   subject: z.string().min(3, "Sujet trop court"),
   category: z
@@ -16,6 +23,7 @@ const createSchema = z.object({
   priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).default("NORMAL"),
   content: z.string().min(10, "Message trop court"),
   projectId: z.string().optional(),
+  attachments: z.array(attachmentInput).optional(),
 });
 
 export async function POST(req: Request) {
@@ -45,6 +53,18 @@ export async function POST(req: Request) {
         create: {
           authorId: session.user.id,
           content: d.content,
+          ...(d.attachments?.length
+            ? {
+                attachments: {
+                  create: d.attachments.map((a) => ({
+                    filename: a.filename,
+                    mimeType: a.mimeType,
+                    size: a.size,
+                    storageKey: a.storageKey,
+                  })),
+                },
+              }
+            : {}),
         },
       },
     },
