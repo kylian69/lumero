@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CreditCard, Calendar, Check, MessageCircle } from "lucide-react";
+import { CreditCard, Calendar, Check, MessageCircle, ArrowUpRight } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
@@ -154,6 +154,18 @@ export default async function PortalSubscriptionPage() {
             </Card>
           );
         })}
+      </div>
+
+      <div className="mt-4 text-center">
+        <Link
+          href="/#tarifs"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+        >
+          <ArrowUpRight className="h-4 w-4" />
+          Comparer les formules sur notre site
+        </Link>
       </div>
 
       {subscriptions.length > 0 && (
