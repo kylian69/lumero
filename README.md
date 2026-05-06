@@ -1,6 +1,6 @@
-# Lume
+# Lumero
 
-Site vitrine de **Lume**, plateforme Website-as-a-Service qui déploie un site professionnel optimisé SEO en moins de 24 heures.
+Site vitrine de **Lumero**, plateforme Website-as-a-Service qui déploie un site professionnel optimisé SEO en moins de 24 heures.
 
 ## Stack
 

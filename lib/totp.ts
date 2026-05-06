@@ -74,7 +74,7 @@ export function buildOtpAuthUrl(params: {
   label: string;
   issuer?: string;
 }): string {
-  const issuer = params.issuer ?? "Lume";
+  const issuer = params.issuer ?? "Lumero";
   const label = encodeURIComponent(`${issuer}:${params.label}`);
   const qs = new URLSearchParams({
     secret: params.secret,

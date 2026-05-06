@@ -16,7 +16,7 @@ export default async function TeamPage() {
     <div>
       <PageHeader
         title="Équipe"
-        description="Membres de l'équipe Lume ayant accès à la console admin."
+        description="Membres de l'équipe Lumero ayant accès à la console admin."
       />
       <Card>
         <CardHeader>

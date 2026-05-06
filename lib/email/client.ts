@@ -33,7 +33,7 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
     return;
   }
 
-  const from = process.env.EMAIL_FROM || "Lume <onboarding@resend.dev>";
+  const from = process.env.EMAIL_FROM || "Lumero <onboarding@resend.dev>";
   const replyTo = params.replyTo || process.env.EMAIL_REPLY_TO || undefined;
 
   try {

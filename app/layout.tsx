@@ -10,17 +10,17 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const siteUrl = "https://lume.studio";
+const siteUrl = "https://lumero.fr";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Lume — Votre site professionnel, déployé en 24h",
-    template: "%s · Lume",
+    default: "Lumero — Votre site professionnel, déployé en 24h",
+    template: "%s · Lumero",
   },
   description:
-    "Lume est la plateforme Website-as-a-Service qui livre un site professionnel, optimisé SEO et prêt à convertir en moins de 24 heures. Choisissez un modèle, répondez au questionnaire, brillez.",
-  applicationName: "Lume",
+    "Lumero est la plateforme Website-as-a-Service qui livre un site professionnel, optimisé SEO et prêt à convertir en moins de 24 heures. Choisissez un modèle, répondez au questionnaire, brillez.",
+  applicationName: "Lumero",
   keywords: [
     "site internet",
     "website as a service",
@@ -33,9 +33,9 @@ export const metadata: Metadata = {
     "restaurateur",
     "consultant",
   ],
-  authors: [{ name: "Lume" }],
-  creator: "Lume",
-  publisher: "Lume",
+  authors: [{ name: "Lumero" }],
+  creator: "Lumero",
+  publisher: "Lumero",
   alternates: {
     canonical: "/",
     languages: { "fr-FR": "/" },
@@ -44,22 +44,22 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     url: siteUrl,
-    title: "Lume — Votre site professionnel, déployé en 24h",
+    title: "Lumero — Votre site professionnel, déployé en 24h",
     description:
       "Choisissez un modèle, répondez au questionnaire, recevez un site optimisé SEO en moins de 24h.",
-    siteName: "Lume",
+    siteName: "Lumero",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Lume — Website as a Service",
+        alt: "Lumero — Website as a Service",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lume — Votre site professionnel, déployé en 24h",
+    title: "Lumero — Votre site professionnel, déployé en 24h",
     description:
       "La plateforme WaaS qui transforme un questionnaire en site professionnel optimisé SEO.",
     images: ["/og.png"],

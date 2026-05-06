@@ -791,7 +791,7 @@ function TemplateOrderForm({
             onChange={(e) =>
               setForm((f) => ({ ...f, entreprise: e.target.value }))
             }
-            placeholder="Lume Studio"
+            placeholder="Lumero Studio"
           />
         </div>
 

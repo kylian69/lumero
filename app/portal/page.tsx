@@ -56,7 +56,7 @@ export default async function PortalHome() {
     <div>
       <PageHeader
         title={`Bonjour ${firstName || ""} 👋`.trim()}
-        description="Suivez votre projet, envoyez des demandes et contactez votre équipe Lume en un clin d'œil."
+        description="Suivez votre projet, envoyez des demandes et contactez votre équipe Lumero en un clin d'œil."
       />
 
       {/* Bloc bienvenue pour prospect sans projet */}

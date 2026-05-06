@@ -44,7 +44,7 @@ export function Navbar() {
         aria-label="Navigation principale"
         className="container flex h-16 items-center justify-between"
       >
-        <Link href="/" aria-label="Accueil Lume">
+        <Link href="/" aria-label="Accueil Lumero">
           <Logo />
         </Link>
 

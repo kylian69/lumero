@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = "https://lume.studio";
+const siteUrl = "https://lumero.fr";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
