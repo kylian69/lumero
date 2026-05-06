@@ -37,6 +37,7 @@ export default async function ClientDetailPage({
           githubRepoUrl: true,
           vercelProjectId: true,
           previewPublishedAt: true,
+          updatedAt: true,
         },
       },
       subscriptions: { orderBy: { createdAt: "desc" } },
