@@ -274,7 +274,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                       className="group rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       title="Supprimer ce projet"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 transition-colors group-hover:text-destructive" />
                     </button>
                   )}
                 </div>
