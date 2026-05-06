@@ -48,3 +48,32 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true, project: updated });
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession();
+  if (session?.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  const project = await prisma.project.findUnique({ where: { id } });
+  if (!project) {
+    return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+  }
+
+  await prisma.project.delete({ where: { id } });
+
+  await logActivity({
+    userId: session.user.id,
+    entityType: "project",
+    entityId: id,
+    action: "deleted",
+    metadata: { name: project.name },
+  });
+
+  return NextResponse.json({ ok: true });
+}
