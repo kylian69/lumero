@@ -21,24 +21,38 @@ async function ghFetch(path: string, options?: RequestInit) {
   return res.json();
 }
 
+async function isOrganization(account: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${GITHUB_API}/orgs/${account}`, {
+      headers: headers(),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function createGithubRepo(slug: string): Promise<{
   repoName: string;
   repoUrl: string;
   fullName: string;
 }> {
-  const org = process.env.GITHUB_ORG;
-  if (!org) throw new Error("GITHUB_ORG is not set");
+  const account = process.env.GITHUB_ORG;
+  if (!account) throw new Error("GITHUB_ORG is not set");
 
   const repoName = `lumero-${slug}`;
-  const data = await ghFetch(`/orgs/${org}/repos`, {
-    method: "POST",
-    body: JSON.stringify({
-      name: repoName,
-      private: true,
-      auto_init: true,
-      description: `Site client Lumero — ${slug}`,
-    }),
+  const body = JSON.stringify({
+    name: repoName,
+    private: true,
+    auto_init: true,
+    description: `Site client Lumero — ${slug}`,
   });
+
+  // Use org endpoint for organizations, user endpoint for personal accounts
+  const isOrg = await isOrganization(account);
+  const endpoint = isOrg ? `/orgs/${account}/repos` : `/user/repos`;
+
+  const data = await ghFetch(endpoint, { method: "POST", body });
 
   return {
     repoName,
