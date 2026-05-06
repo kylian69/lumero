@@ -15,21 +15,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { formatRelative, formatEUR, formatDate } from "@/lib/format";
+import { ProjectSelector } from "@/components/portal/project-selector";
 
 export const dynamic = "force-dynamic";
 
-export default async function PortalHome() {
+export default async function PortalHome({
+  searchParams,
+}: {
+  searchParams: Promise<{ projectId?: string }>;
+}) {
   const session = await getSession();
   const userId = session!.user.id;
+  const { projectId } = await searchParams;
 
-  const [project, activeSub, openTickets, recentCustomizations, prospect] =
+  const [projects, openTickets, recentCustomizations, prospect] =
     await Promise.all([
-      prisma.project.findFirst({
+      prisma.project.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
-      }),
-      prisma.subscription.findFirst({
-        where: { userId, status: "ACTIVE" },
       }),
       prisma.supportTicket.findMany({
         where: {
@@ -50,14 +53,41 @@ export default async function PortalHome() {
       }),
     ]);
 
+  const project =
+    projects.find((p) => p.id === projectId) ?? projects[0] ?? null;
+
+  const activeSub = project
+    ? await prisma.subscription.findFirst({
+        where: { userId, projectId: project.id, status: "ACTIVE" },
+      }) ??
+      await prisma.subscription.findFirst({
+        where: { userId, status: "ACTIVE" },
+      })
+    : await prisma.subscription.findFirst({
+        where: { userId, status: "ACTIVE" },
+      });
+
   const firstName = session!.user.name?.split(" ")[0];
+
+  const projectOptions = projects.map((p) => ({
+    id: p.id,
+    name: p.name,
+    status: p.status,
+  }));
 
   return (
     <div>
       <PageHeader
         title={`Bonjour ${firstName || ""} 👋`.trim()}
-        description="Suivez votre projet, envoyez des demandes et contactez votre équipe Lumero en un clin d'œil."
+        description="Suivez vos projets, envoyez des demandes et contactez votre équipe Lumero en un clin d'œil."
       />
+
+      {projects.length > 1 && (
+        <ProjectSelector
+          projects={projectOptions}
+          selectedId={project?.id ?? ""}
+        />
+      )}
 
       {/* Bloc bienvenue pour prospect sans projet */}
       {!project && (
@@ -86,7 +116,7 @@ export default async function PortalHome() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Globe className="h-4 w-4 text-primary" />
-              Mon site
+              {projects.length > 1 ? "Projet sélectionné" : "Mon site"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -136,7 +166,9 @@ export default async function PortalHome() {
                       </Button>
                     )}
                   <Button size="sm" asChild>
-                    <Link href="/portal/project">Gérer mon site</Link>
+                    <Link href={`/portal/project${project ? `?projectId=${project.id}` : ""}`}>
+                      Gérer mon site
+                    </Link>
                   </Button>
                 </div>
               </div>
@@ -188,6 +220,43 @@ export default async function PortalHome() {
           </CardContent>
         </Card>
       </div>
+
+      {projects.length > 1 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Globe className="h-4 w-4 text-primary" />
+              Tous mes projets ({projects.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {projects.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/portal/project?projectId=${p.id}`}
+                  className={`flex flex-col gap-1.5 rounded-xl border p-3 transition-colors hover:bg-muted/60 ${
+                    p.id === project?.id
+                      ? "border-primary/40 bg-primary/5"
+                      : "border-border/50 bg-muted/30"
+                  }`}
+                >
+                  <p className="text-sm font-medium">{p.name}</p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <StatusBadge kind="project" value={p.status} />
+                    <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                      {p.planType}
+                    </span>
+                  </div>
+                  {p.domain && (
+                    <p className="text-xs text-muted-foreground">{p.domain}</p>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>

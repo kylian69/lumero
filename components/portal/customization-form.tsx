@@ -16,12 +16,23 @@ const CATEGORIES = [
   { id: "autre", label: "Autre" },
 ];
 
-export function CustomizationForm() {
+type ProjectOption = { id: string; name: string };
+
+export function CustomizationForm({
+  projects = [],
+  defaultProjectId,
+}: {
+  projects?: ProjectOption[];
+  defaultProjectId?: string;
+}) {
   const router = useRouter();
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [category, setCategory] = React.useState("contenu");
   const [priority, setPriority] = React.useState("NORMAL");
+  const [projectId, setProjectId] = React.useState(
+    defaultProjectId ?? projects[0]?.id ?? "",
+  );
   const [submitting, setSubmitting] = React.useState(false);
   const [result, setResult] = React.useState<"ok" | "err" | null>(null);
 
@@ -32,7 +43,13 @@ export function CustomizationForm() {
     const res = await fetch("/api/portal/customization", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, category, priority }),
+      body: JSON.stringify({
+        title,
+        description,
+        category,
+        priority,
+        projectId: projectId || undefined,
+      }),
     });
     setSubmitting(false);
     if (res.ok) {
@@ -50,6 +67,21 @@ export function CustomizationForm() {
 
   return (
     <form onSubmit={submit} className="space-y-4">
+      {projects.length > 1 && (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium">Projet concerné</label>
+          <Select
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+          >
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
       <div>
         <label className="mb-1.5 block text-sm font-medium">
           Titre de la demande

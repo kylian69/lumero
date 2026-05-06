@@ -11,6 +11,7 @@ import {
   Send,
   Settings2,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +46,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
   const [creating, setCreating] = React.useState(false);
   const [loadingId, setLoadingId] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<Record<string, string>>({});
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
 
   function setMsg(projectId: string, msg: string) {
     setMessages((prev) => ({ ...prev, [projectId]: msg }));
@@ -118,6 +120,26 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
         router.refresh();
       } else {
         setMsg(projectId, data.error ?? data.message ?? "Erreur lors de la synchronisation");
+      }
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
+  async function deleteProject(projectId: string) {
+    setLoadingId(projectId);
+    try {
+      const res = await fetch(`/api/admin/projects/${projectId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setProjects((prev) => prev.filter((p) => p.id !== projectId));
+        setConfirmDeleteId(null);
+        router.refresh();
+      } else {
+        const data = await res.json();
+        setMsg(projectId, data.error ?? "Erreur lors de la suppression");
+        setConfirmDeleteId(null);
       }
     } finally {
       setLoadingId(null);
@@ -227,7 +249,35 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                     )}
                   </div>
                 </div>
-                <StatusBadge kind="previewStatus" value={p.previewStatus} />
+                <div className="flex items-center gap-2">
+                  <StatusBadge kind="previewStatus" value={p.previewStatus} />
+                  {confirmDeleteId === p.id ? (
+                    <div className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/5 px-2 py-1">
+                      <span className="text-xs text-destructive">Supprimer ?</span>
+                      <button
+                        onClick={() => deleteProject(p.id)}
+                        disabled={loading}
+                        className="rounded px-1.5 py-0.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                      >
+                        {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Oui"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="rounded px-1.5 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted"
+                      >
+                        Non
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(p.id)}
+                      className="group rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      title="Supprimer ce projet"
+                    >
+                      <Trash2 className="h-4 w-4 transition-colors group-hover:text-destructive" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Infrastructure links */}
