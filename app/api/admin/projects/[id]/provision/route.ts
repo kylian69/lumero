@@ -32,8 +32,12 @@ export async function POST(
   // 3. Create Vercel project linked to GitHub repo
   const { projectId: vercelProjectId } = await createVercelProject(project.slug, fullName);
 
-  // 4. Register Vercel webhook for this project
-  await registerVercelWebhook(vercelProjectId);
+  // 4. Register Vercel webhook for this project (non-blocking — DB is updated even if this fails)
+  try {
+    await registerVercelWebhook(vercelProjectId);
+  } catch (err) {
+    console.warn("[provision] Webhook registration failed (non-fatal):", err);
+  }
 
   // 5. Persist in DB
   const updated = await prisma.project.update({

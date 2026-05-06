@@ -48,10 +48,9 @@ export async function registerVercelWebhook(projectId: string): Promise<void> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (!appUrl) throw new Error("NEXT_PUBLIC_APP_URL is not set");
 
-  await vercelFetch(`/v1/integrations/webhooks${teamQuery()}`, {
+  await vercelFetch(`/v1/webhooks${teamQuery()}`, {
     method: "POST",
     body: JSON.stringify({
-      name: `lumero-preview-${projectId}`,
       url: `${appUrl}/api/webhooks/vercel`,
       events: ["deployment.succeeded", "deployment.error"],
       projectIds: [projectId],
