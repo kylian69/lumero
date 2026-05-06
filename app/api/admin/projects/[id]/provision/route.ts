@@ -32,11 +32,16 @@ export async function POST(
   // 3. Create Vercel project linked to GitHub repo
   const { projectId: vercelProjectId } = await createVercelProject(project.slug, fullName);
 
-  // 4. Register Vercel webhook for this project (non-blocking — DB is updated even if this fails)
-  try {
-    await registerVercelWebhook(vercelProjectId);
-  } catch (err) {
-    console.warn("[provision] Webhook registration failed (non-fatal):", err);
+  // 4. Register Vercel webhook (only if APP_URL is a public HTTPS URL)
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  if (appUrl.startsWith("https://")) {
+    try {
+      await registerVercelWebhook(vercelProjectId);
+    } catch (err) {
+      console.warn("[provision] Webhook registration failed (non-fatal):", err);
+    }
+  } else {
+    console.info("[provision] Skipping webhook registration — NEXT_PUBLIC_APP_URL is not a public HTTPS URL.");
   }
 
   // 5. Persist in DB
