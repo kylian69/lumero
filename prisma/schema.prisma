@@ -47,6 +47,22 @@ model User {
   clientNotesAuthored ClientNote[]      @relation("ClientNoteAuthor")
   activities      ActivityLog[]
   verifications   VerificationCode[]
+  invitations     Invitation[]          @relation("InvitedUser")
+  invitationsSent Invitation[]          @relation("InvitationAuthor")
+}
+
+model Invitation {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("InvitedUser", fields: [userId], references: [id], onDelete: Cascade)
+  invitedById String?
+  invitedBy   User?    @relation("InvitationAuthor", fields: [invitedById], references: [id], onDelete: SetNull)
+  token       String   @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
 }
 
 model VerificationCode {
