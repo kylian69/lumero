@@ -9,23 +9,14 @@
 - dans l'espace admin mettre en place les modifs et la possibilité de les valider ou de les refuser
     - 
 
-
-- espace admin dans la section équipe ou autre nouvelle section
-    - pouvoir créer des utilisateur manuellement
-    - gérer les utilisateurs (changer les informations, le rôle, les droits, etc.)
-    - supprimer des utilisateurs
-    - pouvoir envoyer des invitations aux utilisateurs (par email par exemple ou autre)
-
-- revoir le nom de l'application car Lume n'est pas disponible, le nom de domaine est déjà pris en plus, il faut donc trouver autre, dès qu'on aura choisi il faudra donc appliquer la modif sur toute l'application
-
-
-- mettre en place une FAQ avec orientation commerciale c'est à dire que cette FAQ soit vendeuse et bien référencée pour les moteurs de recherche (SEO)
-
 - revoir le SEO de tout le site (en profondeur), le AEO, les aides pour l'IA (robot.txt, etc.)
 
 - générer les mentions légales et la politique de confidentialité
     - mettre un lien vers les mentions légales et la politique de confidentialité sur toutes les pages (doit déjà être présent en footer ?)
 
+
+- gérer les cookies, l'application doit être RGPD compliant
+    - 
 
 mise en production du site :
 - quel infra pour héberger l'application ?
