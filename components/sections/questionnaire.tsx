@@ -216,6 +216,8 @@ export function Questionnaire() {
   const [submitResult, setSubmitResult] = React.useState<boolean>(false);
   const [accountExists, setAccountExists] = React.useState(false);
   const [requiresLogin, setRequiresLogin] = React.useState(false);
+  const [tempPassword, setTempPassword] = React.useState<string | null>(null);
+  const [passwordCopied, setPasswordCopied] = React.useState(false);
 
   React.useEffect(() => {
     if (METIERS_MORE.some((m) => m.id === answers.metier)) {
@@ -322,6 +324,8 @@ export function Questionnaire() {
     setSubmitResult(false);
     setAccountExists(false);
     setRequiresLogin(false);
+    setTempPassword(null);
+    setPasswordCopied(false);
     const start = Date.now();
     const duration = 2800;
     let cancelled = false;
@@ -348,6 +352,7 @@ export function Questionnaire() {
           setRequiresLogin(true);
         } else {
           if (data?.accountExists) setAccountExists(true);
+          if (data?.tempPassword) setTempPassword(data.tempPassword);
           setSubmitResult(true);
         }
       } catch {
@@ -1101,7 +1106,7 @@ export function Questionnaire() {
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex flex-col items-center"
+                        className="flex w-full flex-col items-center"
                       >
                         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
                           <CheckCircle2 className="h-8 w-8" aria-hidden />
@@ -1109,6 +1114,7 @@ export function Questionnaire() {
                         <h3 className="mt-6 text-2xl font-semibold tracking-tight">
                           Votre demande est enregistrée.
                         </h3>
+
                         {accountExists ? (
                           <p className="mt-2 max-w-md text-sm text-muted-foreground">
                             Votre nouvelle demande a bien été reçue. Retrouvez
@@ -1120,13 +1126,48 @@ export function Questionnaire() {
                             <span className="font-medium text-foreground">
                               {answers.entreprise || "votre entreprise"}
                             </span>
-                            . Un aperçu vous attend dans votre boîte mail
-                            d&apos;ici 24 heures.
+                            . Votre espace client est prêt — connectez-vous
+                            avec les identifiants ci-dessous.
                           </p>
                         )}
 
+                        {tempPassword && (
+                          <div className="mt-6 w-full max-w-sm rounded-xl border border-border bg-muted/50 p-4 text-left">
+                            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                              Vos identifiants de connexion
+                            </p>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-2 rounded-lg bg-background px-3 py-2 text-sm">
+                                <span className="truncate text-muted-foreground">
+                                  {answers.email}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between gap-2 rounded-lg bg-background px-3 py-2 text-sm">
+                                <span className="font-mono tracking-wide">
+                                  {tempPassword}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(tempPassword);
+                                    setPasswordCopied(true);
+                                    setTimeout(() => setPasswordCopied(false), 2000);
+                                  }}
+                                  className="shrink-0 text-xs text-muted-foreground hover:text-foreground"
+                                >
+                                  {passwordCopied ? "Copié ✓" : "Copier"}
+                                </button>
+                              </div>
+                            </div>
+                            <p className="mt-3 text-xs text-muted-foreground">
+                              Vous devrez choisir un nouveau mot de passe à la
+                              première connexion.
+                            </p>
+                          </div>
+                        )}
+
                         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-                          {accountExists && (
+                          {accountExists ? (
                             sessionStatus === "authenticated" ? (
                               <Button size="lg" asChild>
                                 <a href="/portal">Accéder à mon espace</a>
@@ -1136,10 +1177,14 @@ export function Questionnaire() {
                                 <a href="/login">Se connecter à mon espace</a>
                               </Button>
                             )
+                          ) : (
+                            <Button size="lg" asChild>
+                              <a href="/login">Se connecter</a>
+                            </Button>
                           )}
                           <Button
                             size="lg"
-                            variant={accountExists ? "outline" : "default"}
+                            variant="outline"
                             onClick={() => {
                               setAnswers(EMPTY);
                               goTo(0);

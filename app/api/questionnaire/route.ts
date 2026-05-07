@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { logActivity } from "@/lib/accounts";
+import { ensureClientUser, logActivity } from "@/lib/accounts";
 import { sendEmail } from "@/lib/email/client";
 import { getAdminEmails } from "@/lib/email/recipients";
 import { prospectCreatedTemplate } from "@/lib/email/templates";
@@ -64,32 +64,42 @@ export async function POST(req: Request) {
     };
 
     let userId: string | null = null;
+    let tempPassword: string | null = null;
 
     if (session?.user) {
-      // Utilisateur connecté : on utilise directement son compte
+      // Utilisateur connecté : on utilise son compte existant
       userId = session.user.id;
     } else {
-      // Utilisateur non connecté : on vérifie si l'email est déjà connu
+      // Utilisateur non connecté : si un compte existe pour cet email,
+      // il doit se connecter avant de soumettre une nouvelle demande
       const existingUser = await prisma.user.findUnique({
         where: { email },
         select: { id: true },
       });
       if (existingUser) {
-        // Un compte existe → l'utilisateur doit se connecter
         return NextResponse.json({ requiresLogin: true });
       }
 
-      const existingProspect = await prisma.prospect.findFirst({
-        where: { email },
-        select: { id: true },
+      // Aucun compte : on en crée un et on renvoie le mot de passe temporaire
+      // directement dans la réponse pour l'afficher à l'écran
+      const result = await ensureClientUser({
+        email,
+        name: data.entreprise,
+        phone: data.telephone || undefined,
       });
-      if (existingProspect) {
-        // Une demande existe déjà → l'utilisateur doit se connecter
-        return NextResponse.json({ requiresLogin: true });
-      }
+      userId = result.user.id;
+      tempPassword = result.tempPassword;
+
+      await logActivity({
+        userId: result.user.id,
+        entityType: "user",
+        entityId: result.user.id,
+        action: "account_created",
+        metadata: { source: "questionnaire" },
+      });
     }
 
-    // Crée systématiquement un nouveau prospect pour cette demande
+    // Crée systématiquement un nouveau prospect pour chaque demande
     const prospect = await prisma.prospect.create({
       data: {
         companyName: data.entreprise,
@@ -98,7 +108,7 @@ export async function POST(req: Request) {
         phone: data.telephone || null,
         status: "NEW",
         source: "QUESTIONNAIRE",
-        ...(userId ? { userId } : {}),
+        userId,
         questionnaire: { create: questionnairePayload },
       },
     });
@@ -125,7 +135,9 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       prospectId: prospect.id,
-      accountExists: !!userId,
+      accountExists: !tempPassword,
+      // Affiché à l'écran uniquement, jamais envoyé par email
+      tempPassword,
     });
   } catch (err) {
     console.error("[/api/questionnaire]", err);
