@@ -13,7 +13,18 @@ export const metadata: Metadata = {
   title: "FAQ — Toutes les réponses sur la création de votre site en 24h",
   description:
     "Délais, tarifs, SEO, hébergement, abonnement : retrouvez toutes les réponses aux questions fréquentes sur Lumero, la solution Website-as-a-Service qui livre un site professionnel en moins de 24 heures.",
-  alternates: { canonical: "/faq" },
+  alternates: {
+    canonical: "/faq",
+    languages: { "fr-FR": "/faq", "x-default": "/faq" },
+  },
+  keywords: [
+    "FAQ création site internet",
+    "questions site web 24h",
+    "tarifs site internet",
+    "SEO site vitrine",
+    "hébergement site web France",
+    "Lumero FAQ",
+  ],
   openGraph: {
     type: "article",
     url: pageUrl,
@@ -33,6 +44,15 @@ export default function FaqPage() {
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
+    "@id": `${pageUrl}#faq`,
+    url: pageUrl,
+    inLanguage: "fr-FR",
+    isPartOf: { "@id": `${siteUrl}#website` },
+    about: { "@id": `${siteUrl}#organization` },
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["#faq-title", "h2", "h3"],
+    },
     mainEntity: FAQ_FLAT.map((item) => ({
       "@type": "Question",
       name: item.question,

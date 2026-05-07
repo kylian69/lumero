@@ -16,68 +16,104 @@ const siteUrl = "https://lumero.fr";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Lumero — Votre site professionnel, déployé en 24h",
+    default:
+      "Lumero — Création de site internet professionnel en 24h | Website-as-a-Service",
     template: "%s · Lumero",
   },
   description:
-    "Lumero est la plateforme Website-as-a-Service qui livre un site professionnel, optimisé SEO et prêt à convertir en moins de 24 heures. Choisissez un modèle, répondez au questionnaire, brillez.",
+    "Lumero crée, héberge et référence votre site internet professionnel en moins de 24 heures. Plateforme française Website-as-a-Service, modèles métier, SEO inclus, Core Web Vitals optimisés. À partir de 99€.",
   applicationName: "Lumero",
+  category: "Business Services",
   keywords: [
-    "site internet",
+    "création de site internet",
+    "création site web 24h",
+    "site internet professionnel",
     "website as a service",
-    "création de site",
-    "site vitrine",
-    "SEO",
-    "Next.js",
-    "24h",
-    "artisan",
-    "restaurateur",
-    "consultant",
+    "WaaS France",
+    "site vitrine pas cher",
+    "site internet artisan",
+    "site internet restaurant",
+    "site internet consultant",
+    "création site clé en main",
+    "agence web France",
+    "SEO inclus",
+    "référencement Google",
+    "Core Web Vitals",
+    "Next.js site rapide",
+    "Lumero",
   ],
-  authors: [{ name: "Lumero" }],
+  authors: [{ name: "Lumero", url: siteUrl }],
   creator: "Lumero",
   publisher: "Lumero",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   alternates: {
     canonical: "/",
-    languages: { "fr-FR": "/" },
+    languages: {
+      "fr-FR": "/",
+      "x-default": "/",
+    },
   },
   openGraph: {
     type: "website",
     locale: "fr_FR",
     url: siteUrl,
-    title: "Lumero — Votre site professionnel, déployé en 24h",
+    title:
+      "Lumero — Création de site internet professionnel en 24h | Website-as-a-Service",
     description:
-      "Choisissez un modèle, répondez au questionnaire, recevez un site optimisé SEO en moins de 24h.",
+      "Plateforme française Website-as-a-Service. Site professionnel optimisé SEO, hébergé et livré en moins de 24 heures. À partir de 99€.",
     siteName: "Lumero",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Lumero — Website as a Service",
+        alt: "Lumero — Création de site internet professionnel en 24h",
+        type: "image/png",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lumero — Votre site professionnel, déployé en 24h",
+    site: "@lumero",
+    creator: "@lumero",
+    title: "Lumero — Site professionnel en 24h | Website-as-a-Service",
     description:
-      "La plateforme WaaS qui transforme un questionnaire en site professionnel optimisé SEO.",
+      "Plateforme française WaaS : site optimisé SEO, hébergé et livré en moins de 24 heures. À partir de 99€.",
     images: ["/og.png"],
   },
   robots: {
     index: true,
     follow: true,
+    nocache: false,
     googleBot: {
       index: true,
       follow: true,
+      noimageindex: false,
+      "max-video-preview": -1,
       "max-image-preview": "large",
       "max-snippet": -1,
     },
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
     apple: "/apple-touch-icon.png",
+    shortcut: "/favicon.ico",
+  },
+  manifest: "/manifest.webmanifest",
+  verification: {
+    // Ajoutez ici vos jetons de vérification (Search Console, Bing, etc.)
+    // google: "xxxxxxxx",
+    // other: { "msvalidate.01": "xxxxxxxx" },
+  },
+  other: {
+    "theme-color": "#ffffff",
   },
 };
 
@@ -95,8 +131,42 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${siteUrl}#website`,
+    url: siteUrl,
+    name: "Lumero",
+    alternateName: ["Lumero.fr", "Lumero WaaS"],
+    description:
+      "Plateforme française Website-as-a-Service : création, hébergement et référencement de sites professionnels en moins de 24 heures.",
+    inLanguage: "fr-FR",
+    publisher: { "@id": `${siteUrl}#organization` },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteUrl}/faq?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
-    <html lang="fr" suppressHydrationWarning className={inter.variable}>
+    <html lang="fr-FR" suppressHydrationWarning className={inter.variable}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+      </head>
       <body className="font-sans min-h-screen bg-background text-foreground">
         <ThemeProvider
           attribute="class"
