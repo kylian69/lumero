@@ -8,6 +8,7 @@
 !.yarn/releases
 !.yarn/versions
 package-lock.json
+prisma/dev.db
 
 # testing
 /coverage
