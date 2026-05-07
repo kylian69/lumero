@@ -9,19 +9,6 @@
 - dans l'espace admin mettre en place les modifs et la possibilité de les valider ou de les refuser
     - 
 
-- recevoir des notifications par email 
-    - quand il y a une nouvelle demande de modif 
-    - quand il y a une nouvelle commande 
-    - quand il y a un nouveau commentaire dans le support (client et admin)
-    - quand il y'a un nouveau prospect
-
-- espace client/admin
-    - pouvoir changer son email (avec un système de verification)
-    - pouvoir changer son mot de passe (avec un système de verification)
-    - pouvoir changer son nom 
-    - pouvoir changer son prenom
-    - pouvoir changer son avatar
-    - pouvoir mettre en place le 2FA
 
 - espace admin dans la section équipe ou autre nouvelle section
     - pouvoir créer des utilisateur manuellement
@@ -31,9 +18,21 @@
 
 - revoir le nom de l'application car Lume n'est pas disponible, le nom de domaine est déjà pris en plus, il faut donc trouver autre, dès qu'on aura choisi il faudra donc appliquer la modif sur toute l'application
 
+
 - mettre en place une FAQ avec orientation commerciale c'est à dire que cette FAQ soit vendeuse et bien référencée pour les moteurs de recherche (SEO)
 
 - revoir le SEO de tout le site (en profondeur), le AEO, les aides pour l'IA (robot.txt, etc.)
 
 - générer les mentions légales et la politique de confidentialité
     - mettre un lien vers les mentions légales et la politique de confidentialité sur toutes les pages (doit déjà être présent en footer ?)
+
+
+mise en production du site :
+- quel infra pour héberger l'application ?
+ - à savoir que je peux mettre à dispoisition des ressources en local chez moi pour mettre en place, cela l'idéal serait d'héberger l'application chez moi pour éviter tous les frais et assurer une souverainté
+
+- pour les preview clients 
+    - je veux également héberger les preview clients en local pour éviter tous les frais et assurer une souverainté
+    - les preview clients ne devronts pas nécessiter beaucoup de ressource
+
+comment imagine tu la mise en place de tout ça ? qu'est ce que tu me conseil et propose pour mettre en place cela ? 
