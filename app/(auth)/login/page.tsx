@@ -25,6 +25,8 @@ export default function LoginPage() {
   );
 }
 
+const REMEMBER_ME_KEY = "lume_remembered_email";
+
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -35,6 +37,15 @@ function LoginForm() {
   const [needOtp, setNeedOtp] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [rememberMe, setRememberMe] = React.useState(false);
+
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem(REMEMBER_ME_KEY);
+    if (savedEmail && !params.get("email")) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, [params]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,6 +71,11 @@ function LoginForm() {
       }
       setError("Email ou mot de passe incorrect.");
       return;
+    }
+    if (rememberMe) {
+      localStorage.setItem(REMEMBER_ME_KEY, email);
+    } else {
+      localStorage.removeItem(REMEMBER_ME_KEY);
     }
     router.push(next || "/portal");
     router.refresh();
@@ -105,6 +121,21 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="remember-me"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 rounded border-input accent-primary cursor-pointer"
+            />
+            <label
+              htmlFor="remember-me"
+              className="text-sm text-muted-foreground cursor-pointer select-none"
+            >
+              Se souvenir de moi
+            </label>
           </div>
           {needOtp && (
             <div>
