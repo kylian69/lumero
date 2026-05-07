@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Archive, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InternalNotes, type Note } from "@/components/admin/internal-notes";
@@ -117,6 +117,105 @@ function Field({
         className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
     </div>
+  );
+}
+
+export function ClientActions({
+  clientId,
+  isArchived,
+}: {
+  clientId: string;
+  isArchived: boolean;
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = React.useState<null | "archive" | "delete">(null);
+  const [message, setMessage] = React.useState<string | null>(null);
+
+  async function toggleArchive() {
+    setBusy("archive");
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/clients/${clientId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: !isArchived }),
+      });
+      if (res.ok) {
+        setMessage(isArchived ? "Client désarchivé" : "Client archivé");
+        router.refresh();
+      } else {
+        setMessage("Erreur lors de l'archivage");
+      }
+    } finally {
+      setBusy(null);
+      setTimeout(() => setMessage(null), 2500);
+    }
+  }
+
+  async function remove() {
+    if (
+      !confirm(
+        "Supprimer définitivement ce client ? Cette action est irréversible (les projets, abonnements, tickets et notes seront supprimés).",
+      )
+    )
+      return;
+    setBusy("delete");
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/clients/${clientId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        router.push("/admin/clients");
+        router.refresh();
+      } else {
+        setMessage("Erreur lors de la suppression");
+        setBusy(null);
+      }
+    } catch {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Actions</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Button
+          onClick={toggleArchive}
+          disabled={busy !== null}
+          variant="outline"
+          size="sm"
+          className="w-full justify-start"
+        >
+          {busy === "archive" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Archive className="h-4 w-4" />
+          )}
+          {isArchived ? "Désarchiver" : "Archiver"}
+        </Button>
+        <Button
+          onClick={remove}
+          disabled={busy !== null}
+          variant="outline"
+          size="sm"
+          className="w-full justify-start text-destructive hover:text-destructive"
+        >
+          {busy === "delete" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
+          Supprimer
+        </Button>
+        {message && (
+          <p className="pt-1 text-xs text-muted-foreground">{message}</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

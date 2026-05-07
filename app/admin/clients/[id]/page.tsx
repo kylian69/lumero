@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { formatDate, formatDateTime, formatEUR } from "@/lib/format";
 import { ActivityTimeline } from "@/components/admin/activity-timeline";
 import { getClientActivity } from "@/lib/activity";
-import { ClientContactEditor, ClientNotes } from "@/components/admin/client-detail";
+import { ClientContactEditor, ClientNotes, ClientActions } from "@/components/admin/client-detail";
 import { ProjectManager } from "@/components/admin/project-manager";
 
 export const dynamic = "force-dynamic";
@@ -196,6 +196,8 @@ export default async function ClientDetailPage({
               author: n.author,
             }))}
           />
+
+          <ClientActions clientId={client.id} isArchived={!!client.archivedAt} />
 
           <Card>
             <CardHeader>
