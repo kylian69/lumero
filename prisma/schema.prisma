@@ -37,7 +37,7 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  prospect        Prospect?
+  prospects       Prospect[]
   projects        Project[]
   subscriptions   Subscription[]
   tickets         SupportTicket[]       @relation("TicketAuthor")

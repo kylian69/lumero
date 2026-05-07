@@ -61,8 +61,9 @@ export async function getClientActivity(
   const [user, prospect, subs, tickets, customizations, projects] =
     await Promise.all([
       prisma.user.findUnique({ where: { id: userId }, select: { id: true } }),
-      prisma.prospect.findUnique({
+      prisma.prospect.findFirst({
         where: { userId },
+        orderBy: { createdAt: "desc" },
         select: { id: true },
       }),
       prisma.subscription.findMany({
