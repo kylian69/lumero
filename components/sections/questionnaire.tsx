@@ -225,6 +225,25 @@ export function Questionnaire() {
     }
   }, [answers.metier]);
 
+  // Après connexion : soumet automatiquement le questionnaire mis en cache
+  React.useEffect(() => {
+    if (sessionStatus !== "authenticated") return;
+    const raw = sessionStorage.getItem("lume_pending_questionnaire");
+    if (!raw) return;
+    try {
+      const pending = JSON.parse(raw) as { answers: Answers; savedAt: string };
+      const age = Date.now() - new Date(pending.savedAt).getTime();
+      sessionStorage.removeItem("lume_pending_questionnaire");
+      if (age > 60 * 60 * 1000) return; // expiré après 1 heure
+      setAnswers(pending.answers);
+      setDirection(1);
+      setStepIndex(STEPS.indexOf("loading"));
+    } catch {
+      sessionStorage.removeItem("lume_pending_questionnaire");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionStatus]);
+
   const step: Step = STEPS[stepIndex];
 
   const canAdvance = React.useMemo(() => {
@@ -1088,10 +1107,20 @@ export function Questionnaire() {
                           demande.
                         </p>
                         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-                          <Button size="lg" asChild>
-                            <a href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + "#questionnaire" : "/")}`}>
-                              Se connecter
-                            </a>
+                          <Button
+                            size="lg"
+                            onClick={() => {
+                              sessionStorage.setItem(
+                                "lume_pending_questionnaire",
+                                JSON.stringify({
+                                  answers,
+                                  savedAt: new Date().toISOString(),
+                                }),
+                              );
+                              window.location.href = `/login?email=${encodeURIComponent(answers.email)}&next=${encodeURIComponent("/#questionnaire")}`;
+                            }}
+                          >
+                            Se connecter
                           </Button>
                           <Button
                             size="lg"
