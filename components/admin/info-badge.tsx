@@ -25,7 +25,6 @@ export function InfoBadge({ label, description, ...badgeProps }: InfoBadgeProps)
     <span ref={ref} className="relative inline-flex">
       <Badge
         {...badgeProps}
-        title={description || undefined}
         onMouseEnter={() => description && setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onClick={() => description && setOpen((v) => !v)}
