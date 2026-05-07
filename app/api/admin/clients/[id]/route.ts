@@ -8,6 +8,7 @@ const schema = z.object({
   name: z.string().nullable().optional(),
   email: z.string().email().optional(),
   phone: z.string().nullable().optional(),
+  archived: z.boolean().optional(),
 });
 
 export async function PATCH(
@@ -25,13 +26,15 @@ export async function PATCH(
   }
   const before = await prisma.user.findUnique({
     where: { id },
-    select: { name: true, email: true, phone: true },
+    select: { name: true, email: true, phone: true, archivedAt: true },
   });
   if (!before) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
-  const data: { name?: string | null; email?: string; phone?: string | null } = {
-    ...parsed.data,
+
+  const { archived, ...rest } = parsed.data;
+  const data: { name?: string | null; email?: string; phone?: string | null; archivedAt?: Date | null } = {
+    ...rest,
   };
   if (data.email) data.email = data.email.toLowerCase().trim();
   if (data.email && data.email !== before.email) {
@@ -43,13 +46,36 @@ export async function PATCH(
       );
     }
   }
+  if (archived === true && !before.archivedAt) {
+    data.archivedAt = new Date();
+  } else if (archived === false && before.archivedAt) {
+    data.archivedAt = null;
+  }
+
   const user = await prisma.user.update({
     where: { id },
     data,
   });
+
+  if (archived === true && !before.archivedAt) {
+    await logActivity({
+      userId: session.user.id,
+      entityType: "client",
+      entityId: id,
+      action: "archived",
+    });
+  } else if (archived === false && before.archivedAt) {
+    await logActivity({
+      userId: session.user.id,
+      entityType: "client",
+      entityId: id,
+      action: "unarchived",
+    });
+  }
+
   const changes: Record<string, { from: unknown; to: unknown }> = {};
   for (const key of ["name", "email", "phone"] as const) {
-    if (key in parsed.data && data[key] !== before[key]) {
+    if (key in rest && data[key] !== before[key]) {
       changes[key] = { from: before[key], to: data[key] ?? null };
     }
   }
@@ -63,4 +89,31 @@ export async function PATCH(
     });
   }
   return NextResponse.json({ ok: true, user });
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await getSession();
+  if (session?.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const { id } = await params;
+  const existing = await prisma.user.findUnique({
+    where: { id, role: "CLIENT" },
+    select: { name: true, email: true },
+  });
+  if (!existing) {
+    return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+  }
+  await prisma.user.delete({ where: { id } });
+  await logActivity({
+    userId: session.user.id,
+    entityType: "client",
+    entityId: id,
+    action: "deleted",
+    metadata: existing,
+  });
+  return NextResponse.json({ ok: true });
 }
