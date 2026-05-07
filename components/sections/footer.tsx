@@ -28,6 +28,11 @@ export function Footer() {
               </a>
             </li>
             <li>
+              <a href="#contact" className="hover:text-foreground">
+                Contact
+              </a>
+            </li>
+            <li>
               <a href="/mentions-legales" className="hover:text-foreground">
                 Mentions légales
               </a>

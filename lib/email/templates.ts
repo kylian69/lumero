@@ -327,6 +327,44 @@ export function welcomeProspectTemplate(args: {
   return { subject, html, text };
 }
 
+// ───────────────────────── Formulaire de contact ─────────────────────────
+
+export function contactMessageToAdminsTemplate(args: {
+  senderName: string;
+  senderEmail: string;
+  subject: string;
+  message: string;
+  attachmentCount?: number;
+}): Template {
+  const subjectLine = `Message de contact — ${args.subject}`;
+  const html = layout(
+    subjectLine,
+    `<p><strong>${escape(args.senderName)}</strong> (${escape(args.senderEmail)}) vous a envoyé un message via le formulaire de contact.</p>
+     <p><strong>Sujet :</strong> ${escape(args.subject)}</p>
+     <p><strong>Message :</strong></p>
+     <p style="white-space:pre-wrap;background:#f6f6f6;padding:12px;border-radius:6px;">${escape(args.message)}</p>
+     ${args.attachmentCount ? `<p style="color:#666;font-size:13px;">${args.attachmentCount} pièce(s) jointe(s) incluse(s).</p>` : ""}`,
+  );
+  const text = `Nouveau message de ${args.senderName} (${args.senderEmail})\nSujet : ${args.subject}\n\n${args.message}`;
+  return { subject: subjectLine, html, text };
+}
+
+export function contactAutoReplyTemplate(args: {
+  senderName: string;
+  subject: string;
+}): Template {
+  const subject = `Votre message a bien été reçu — ${args.subject}`;
+  const html = layout(
+    subject,
+    `<p>Bonjour ${escape(args.senderName)},</p>
+     <p>Nous avons bien reçu votre message concernant <strong>${escape(args.subject)}</strong>.</p>
+     <p>Notre équipe vous répondra dans les plus brefs délais, généralement sous 24 à 48 heures.</p>
+     <p style="color:#666;font-size:12px;">Si vous n'êtes pas à l'origine de cet envoi, ignorez ce message.</p>`,
+  );
+  const text = `Bonjour ${args.senderName},\n\nNous avons bien reçu votre message "${args.subject}".\nNotre équipe vous répondra dans les plus brefs délais.`;
+  return { subject, html, text };
+}
+
 // ───────────────────────── Preview publiée → client ─────────────────────────
 
 export function previewPublishedTemplate(args: {
