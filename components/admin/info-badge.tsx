@@ -39,7 +39,7 @@ export function InfoBadge({ label, description, ...badgeProps }: InfoBadgeProps)
       {open && description && (
         <span
           role="tooltip"
-          className="pointer-events-none absolute left-1/2 top-full z-20 mt-1.5 w-max max-w-xs -translate-x-1/2 rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs text-popover-foreground shadow-md"
+          className="pointer-events-none absolute left-1/2 top-full z-20 mt-1.5 w-max -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-neutral-900 px-2.5 py-1.5 text-xs text-white shadow-lg dark:bg-neutral-800"
         >
           {description}
         </span>
