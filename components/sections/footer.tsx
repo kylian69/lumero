@@ -28,6 +28,11 @@ export function Footer() {
               </a>
             </li>
             <li>
+              <a href="/faq" className="hover:text-foreground">
+                FAQ
+              </a>
+            </li>
+            <li>
               <a href="#contact" className="hover:text-foreground">
                 Contact
               </a>
