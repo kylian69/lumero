@@ -117,7 +117,7 @@ export default async function PortalHome({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Globe className="h-4 w-4 text-primary" />
-              {projects.length > 1 ? "Projet sélectionné" : "Mon site"}
+              {projects.length > 1 ? "Projet sélectionné" : "Mes sites"}
             </CardTitle>
           </CardHeader>
           <CardContent>

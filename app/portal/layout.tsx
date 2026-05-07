@@ -28,7 +28,7 @@ export default async function PortalLayout({
       icon: "LayoutDashboard",
       exact: true,
     },
-    { label: "Mon site", href: "/portal/project", icon: "Globe" },
+    { label: "Mes sites", href: "/portal/project", icon: "Globe" },
     {
       label: "Personnalisations",
       href: "/portal/customization",
