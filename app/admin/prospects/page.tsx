@@ -1,11 +1,7 @@
 import Link from "next/link";
-import { Mailbox, Phone, Calendar } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatRelative } from "@/lib/format";
+import { ProspectsList } from "@/components/admin/prospects-list";
 import type { ProspectStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -101,64 +97,7 @@ export default async function ProspectsPage({
         />
       </form>
 
-      {prospects.length === 0 ? (
-        <EmptyState
-          icon={Mailbox}
-          title="Aucun prospect"
-          description="Les prospects apparaîtront ici dès qu'une personne soumettra le questionnaire ou une demande de devis."
-        />
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border/50">
-              {prospects.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/admin/prospects/${p.id}`}
-                  className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold">
-                        {p.companyName}
-                      </p>
-                      <StatusBadge kind="prospect" value={p.status} />
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1">
-                        <Mailbox className="h-3 w-3" />
-                        {p.email}
-                      </span>
-                      {p.phone && (
-                        <span className="inline-flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {p.phone}
-                        </span>
-                      )}
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatRelative(p.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:flex-nowrap">
-                    {p.questionnaire && (
-                      <span className="rounded-full bg-muted px-2 py-0.5">
-                        Questionnaire
-                      </span>
-                    )}
-                    {p.quoteRequests.length > 0 && (
-                      <span className="rounded-full bg-muted px-2 py-0.5">
-                        {p.quoteRequests.length} devis
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <ProspectsList prospects={prospects} />
     </div>
   );
 }
