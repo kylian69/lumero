@@ -4,7 +4,18 @@ const siteUrl = "https://lumero.fr";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const paths = ["", "faq", "#modeles", "#tarifs", "#a-propos", "#questionnaire"];
+  const paths = [
+    "",
+    "faq",
+    "mentions-legales",
+    "politique-confidentialite",
+    "legal-notice",
+    "privacy-policy",
+    "#modeles",
+    "#tarifs",
+    "#a-propos",
+    "#questionnaire",
+  ];
   return paths.map((path) => ({
     url: `${siteUrl}/${path}`,
     lastModified: now,
