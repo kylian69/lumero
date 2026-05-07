@@ -28,13 +28,21 @@ export async function saveAttachmentFile(
   buffer: Buffer,
   originalName: string,
 ) {
-  const safeTicket = ticketId.replace(/[^a-zA-Z0-9_-]/g, "");
-  const dir = path.join(UPLOADS_ROOT, safeTicket);
+  return saveScopedFile(ticketId, buffer, originalName);
+}
+
+export async function saveScopedFile(
+  scope: string,
+  buffer: Buffer,
+  originalName: string,
+) {
+  const safeScope = scope.replace(/[^a-zA-Z0-9_-]/g, "");
+  const dir = path.join(UPLOADS_ROOT, safeScope);
   await fs.mkdir(dir, { recursive: true });
   const ext = path.extname(originalName).slice(0, 12).replace(/[^.a-zA-Z0-9]/g, "");
   const key = `${crypto.randomUUID()}${ext}`;
   await fs.writeFile(path.join(dir, key), buffer);
-  return `${safeTicket}/${key}`;
+  return `${safeScope}/${key}`;
 }
 
 export function resolveAttachmentPath(storageKey: string) {

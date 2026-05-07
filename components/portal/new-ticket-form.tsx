@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import {
+  MessageComposer,
+  type DraftAttachment,
+} from "@/components/shared/message-composer";
 
 const CATEGORIES = [
   { id: "TECHNIQUE", label: "Technique (bug, incident)" },
@@ -34,6 +37,7 @@ export function NewTicketForm({
   const [category, setCategory] = React.useState(initialCategory);
   const [priority, setPriority] = React.useState("NORMAL");
   const [content, setContent] = React.useState("");
+  const [attachments, setAttachments] = React.useState<DraftAttachment[]>([]);
   const [projectId, setProjectId] = React.useState(
     defaultProjectId ?? projects[0]?.id ?? "",
   );
@@ -42,6 +46,10 @@ export function NewTicketForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (content.trim().length < 10) {
+      setError("Le message doit faire au moins 10 caractères.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     const res = await fetch("/api/portal/tickets", {
@@ -53,6 +61,7 @@ export function NewTicketForm({
         priority,
         content,
         projectId: projectId || undefined,
+        attachments,
       }),
     });
     const data = await res.json();
@@ -69,10 +78,7 @@ export function NewTicketForm({
       {projects.length > 1 && (
         <div>
           <label className="mb-1.5 block text-sm font-medium">Projet concerné</label>
-          <Select
-            value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-          >
+          <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             <option value="">— Aucun projet spécifique —</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -95,10 +101,7 @@ export function NewTicketForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-sm font-medium">Catégorie</label>
-          <Select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
+          <Select value={category} onChange={(e) => setCategory(e.target.value)}>
             {CATEGORIES.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.label}
@@ -108,10 +111,7 @@ export function NewTicketForm({
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium">Priorité</label>
-          <Select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-          >
+          <Select value={priority} onChange={(e) => setPriority(e.target.value)}>
             <option value="LOW">Faible</option>
             <option value="NORMAL">Normale</option>
             <option value="HIGH">Haute</option>
@@ -120,16 +120,16 @@ export function NewTicketForm({
         </div>
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-medium">
-          Votre message
-        </label>
-        <Textarea
-          required
-          minLength={10}
-          rows={6}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Décrivez votre demande avec le plus de détails possible."
+        <label className="mb-1.5 block text-sm font-medium">Votre message</label>
+        <MessageComposer
+          uploadEndpoint="/api/uploads/draft"
+          content={content}
+          onContentChange={setContent}
+          attachments={attachments}
+          onAttachmentsChange={setAttachments}
+          placeholder="Décrivez votre demande avec le plus de détails possible (markdown supporté)…"
+          hideSendButton
+          minRows={6}
         />
       </div>
       {error && (

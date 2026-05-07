@@ -2,12 +2,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { CustomizationControls } from "@/components/admin/customization-controls";
-import { formatDateTime } from "@/lib/format";
+import { CustomizationThread } from "@/components/shared/customization-thread";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +17,21 @@ export default async function AdminCustomizationDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await getSession();
   const request = await prisma.customizationRequest.findUnique({
     where: { id },
     include: {
       user: { select: { id: true, name: true, email: true } },
       project: { select: { id: true, name: true } },
+      messages: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          author: { select: { name: true, email: true, role: true } },
+          attachments: {
+            select: { id: true, filename: true, mimeType: true, size: true },
+          },
+        },
+      },
     },
   });
   if (!request) notFound();
@@ -46,28 +56,31 @@ export default async function AdminCustomizationDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Description</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 flex flex-wrap items-center gap-2">
-                <StatusBadge kind="customization" value={request.status} />
-                <StatusBadge kind="priority" value={request.priority} />
-                {request.category && (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                    {request.category}
-                  </span>
-                )}
-              </div>
-              <p className="whitespace-pre-wrap text-sm">
-                {request.description}
-              </p>
-              <p className="mt-4 text-xs text-muted-foreground">
-                Soumise le {formatDateTime(request.createdAt)}
-              </p>
-            </CardContent>
-          </Card>
+          <CustomizationThread
+            requestId={request.id}
+            title={request.title}
+            status={request.status}
+            priority={request.priority}
+            category={request.category}
+            messages={request.messages.map((m) => ({
+              id: m.id,
+              content: m.content,
+              isInternal: m.isInternal,
+              createdAt: m.createdAt,
+              editedAt: m.editedAt,
+              deletedAt: m.deletedAt,
+              authorId: m.authorId,
+              author: {
+                name: m.author.name,
+                email: m.author.email,
+                role: m.author.role,
+              },
+              attachments: m.attachments,
+            }))}
+            scope="admin"
+            allowStatusChange
+            currentUserId={session!.user.id}
+          />
         </div>
 
         <div className="space-y-6">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -76,9 +77,10 @@ export default async function PortalCustomizationPage({
               ) : (
                 <div className="space-y-2">
                   {requests.map((r) => (
-                    <div
+                    <Link
                       key={r.id}
-                      className="rounded-xl border border-border/50 bg-muted/30 p-3"
+                      href={`/portal/customization/${r.id}`}
+                      className="block rounded-xl border border-border/50 bg-muted/30 p-3 transition hover:border-border hover:bg-muted/50"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-medium">{r.title}</p>
@@ -95,7 +97,7 @@ export default async function PortalCustomizationPage({
                       <p className="mt-2 text-xs text-muted-foreground">
                         {formatDateTime(r.createdAt)}
                       </p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
