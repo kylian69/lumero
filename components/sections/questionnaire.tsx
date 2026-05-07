@@ -342,9 +342,8 @@ export function Questionnaire() {
         if (cancelled) return;
         if (!res.ok) {
           setSubmitError(data?.error || "Erreur lors de l'envoi.");
-        } else if (data?.accountExists) {
-          setAccountExists(true);
         } else {
+          if (data?.accountExists) setAccountExists(true);
           setSubmitResult(true);
         }
       } catch {
@@ -1058,44 +1057,6 @@ export function Questionnaire() {
                           Réessayer
                         </Button>
                       </motion.div>
-                    ) : accountExists ? (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="flex flex-col items-center"
-                      >
-                        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                          <Lock className="h-8 w-8" aria-hidden />
-                        </span>
-                        <h3 className="mt-6 text-2xl font-semibold tracking-tight">
-                          Un compte existe déjà
-                        </h3>
-                        <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                          L&apos;adresse{" "}
-                          <span className="font-medium text-foreground">
-                            {answers.email}
-                          </span>{" "}
-                          est déjà associée à un compte Lumero.
-                        </p>
-                        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-                          {sessionStatus === "authenticated" ? (
-                            <Button size="lg" asChild>
-                              <a href="/portal">Accéder à mon espace</a>
-                            </Button>
-                          ) : (
-                            <Button size="lg" asChild>
-                              <a href="/login">Se connecter</a>
-                            </Button>
-                          )}
-                          <Button
-                            size="lg"
-                            variant="outline"
-                            onClick={() => goTo(STEPS.indexOf("coordonnees"))}
-                          >
-                            Modifier l&apos;email
-                          </Button>
-                        </div>
-                      </motion.div>
                     ) : (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -1106,24 +1067,39 @@ export function Questionnaire() {
                           <CheckCircle2 className="h-8 w-8" aria-hidden />
                         </span>
                         <h3 className="mt-6 text-2xl font-semibold tracking-tight">
-                          Votre structure est prête.
+                          Votre demande est enregistrée.
                         </h3>
-                        <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                          Nous avons préparé une maquette sur-mesure pour{" "}
-                          <span className="font-medium text-foreground">
-                            {answers.entreprise || "votre entreprise"}
-                          </span>
-                          . Vos identifiants de connexion vous ont été envoyés
-                          par email.
-                        </p>
+                        {accountExists ? (
+                          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                            Votre nouvelle demande a bien été reçue. Retrouvez
+                            le suivi depuis votre espace client.
+                          </p>
+                        ) : (
+                          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                            Nous avons préparé une maquette sur-mesure pour{" "}
+                            <span className="font-medium text-foreground">
+                              {answers.entreprise || "votre entreprise"}
+                            </span>
+                            . Un aperçu vous attend dans votre boîte mail
+                            d&apos;ici 24 heures.
+                          </p>
+                        )}
 
                         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-                          <Button size="lg" asChild>
-                            <a href="/portal">Accéder à mon espace</a>
-                          </Button>
+                          {accountExists && (
+                            sessionStatus === "authenticated" ? (
+                              <Button size="lg" asChild>
+                                <a href="/portal">Accéder à mon espace</a>
+                              </Button>
+                            ) : (
+                              <Button size="lg" asChild>
+                                <a href="/login">Se connecter à mon espace</a>
+                              </Button>
+                            )
+                          )}
                           <Button
                             size="lg"
-                            variant="outline"
+                            variant={accountExists ? "outline" : "default"}
                             onClick={() => {
                               setAnswers(EMPTY);
                               goTo(0);
