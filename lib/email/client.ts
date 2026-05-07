@@ -9,12 +9,19 @@ function getClient(): Resend | null {
   return resendClient;
 }
 
+type EmailAttachment = {
+  filename: string;
+  content: Buffer;
+  content_type?: string;
+};
+
 type SendEmailParams = {
   to: string | string[];
   subject: string;
   html: string;
   text?: string;
   replyTo?: string;
+  attachments?: EmailAttachment[];
 };
 
 export async function sendEmail(params: SendEmailParams): Promise<void> {
@@ -44,6 +51,11 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
       html: params.html,
       text: params.text,
       replyTo,
+      attachments: params.attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        content_type: a.content_type,
+      })),
     });
     if (result.error) {
       console.error("[email] send failed", {

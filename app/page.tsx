@@ -5,6 +5,7 @@ import { Gallery } from "@/components/sections/gallery";
 import { Pricing } from "@/components/sections/pricing";
 import { About } from "@/components/sections/about";
 import { Questionnaire } from "@/components/sections/questionnaire";
+import { Contact } from "@/components/sections/contact";
 import { Footer } from "@/components/sections/footer";
 
 export default function HomePage() {
@@ -62,6 +63,7 @@ export default function HomePage() {
         <Pricing />
         <About />
         <Questionnaire />
+        <Contact />
       </main>
       <Footer />
       <script
