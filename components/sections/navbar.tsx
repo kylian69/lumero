@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { href: "#modeles", label: "Modèles" },
   { href: "#tarifs", label: "Tarifs" },
   { href: "#a-propos", label: "À propos" },
+  { href: "/faq", label: "FAQ" },
   { href: "#contact", label: "Contact" },
 ];
 
