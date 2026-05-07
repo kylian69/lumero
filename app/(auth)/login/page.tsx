@@ -135,9 +135,17 @@ function LoginForm() {
             )}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
+            <Link
+              href="/forgot-password"
+              className="font-medium text-primary"
+            >
+              Mot de passe oublié ?
+            </Link>
+          </p>
+          <p className="text-center text-xs text-muted-foreground">
             Pas encore de compte ?{" "}
-            <Link href="/#questionnaire" className="font-medium text-primary">
-              Démarrer le questionnaire
+            <Link href="/signup" className="font-medium text-primary">
+              Créer un compte
             </Link>
           </p>
         </form>
