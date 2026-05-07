@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+import { BulkDeleteDialog } from "@/components/admin/prospects-list";
 import { formatDate } from "@/lib/format";
 
 export type ManagedUser = {
@@ -51,6 +53,11 @@ export function UsersManager({
   const [editing, setEditing] = React.useState<ManagedUser | null>(null);
   const [deleting, setDeleting] = React.useState<ManagedUser | null>(null);
 
+  // Bulk selection
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false);
+  const [bulkLoading, setBulkLoading] = React.useState(false);
+
   const filtered = initialUsers.filter((u) => {
     if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
     if (!query) return true;
@@ -61,6 +68,58 @@ export function UsersManager({
       (u.phone?.toLowerCase().includes(q) ?? false)
     );
   });
+
+  const filteredIds = filtered.map((u) => u.id);
+  const allSelected =
+    filteredIds.length > 0 && filteredIds.every((id) => selected.has(id));
+  const someSelected = selected.size > 0;
+
+  function toggleAll() {
+    if (allSelected) {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        filteredIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelected((prev) => new Set([...prev, ...filteredIds]));
+    }
+  }
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  async function bulkDelete() {
+    setBulkLoading(true);
+    const res = await fetch("/api/admin/users/bulk", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "delete", ids: [...selected] }),
+    });
+    setBulkLoading(false);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(data.error || "Erreur");
+      return;
+    }
+    const msg =
+      data.skipped > 0
+        ? `${data.count} utilisateur${data.count > 1 ? "s" : ""} supprimé${data.count > 1 ? "s" : ""} (${data.skipped} ignoré${data.skipped > 1 ? "s" : ""}).`
+        : `${data.count} utilisateur${data.count > 1 ? "s" : ""} supprimé${data.count > 1 ? "s" : ""}.`;
+    toast.success(msg);
+    setSelected(new Set());
+    setBulkDeleteOpen(false);
+    router.refresh();
+  }
 
   async function sendInvite(userId: string) {
     const res = await fetch(`/api/admin/users/${userId}/invite`, {
@@ -112,11 +171,31 @@ export function UsersManager({
             </p>
           ) : (
             <div className="divide-y divide-border/50">
+              {/* Select-all header */}
+              <div className="flex items-center gap-3 px-5 py-2.5">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected && !allSelected;
+                  }}
+                  onChange={toggleAll}
+                  className="h-4 w-4 rounded border-border accent-primary"
+                  aria-label="Tout sélectionner"
+                />
+                <span className="text-xs text-muted-foreground">
+                  {someSelected
+                    ? `${selected.size} sélectionné${selected.size > 1 ? "s" : ""}`
+                    : "Tout sélectionner"}
+                </span>
+              </div>
               {filtered.map((u) => (
                 <UserRow
                   key={u.id}
                   user={u}
                   isSelf={u.id === currentUserId}
+                  selected={selected.has(u.id)}
+                  onToggle={() => toggleOne(u.id)}
                   onEdit={() => setEditing(u)}
                   onDelete={() => setDeleting(u)}
                   onInvite={() => sendInvite(u.id)}
@@ -152,6 +231,29 @@ export function UsersManager({
           router.refresh();
         }}
       />
+
+      {/* Bulk action bar */}
+      <BulkActionBar count={selected.size} onClear={() => setSelected(new Set())}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setBulkDeleteOpen(true)}
+          disabled={bulkLoading}
+          className="text-destructive hover:text-destructive"
+        >
+          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+          Supprimer
+        </Button>
+      </BulkActionBar>
+
+      <BulkDeleteDialog
+        open={bulkDeleteOpen}
+        count={selected.size}
+        loading={bulkLoading}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={bulkDelete}
+        label="utilisateur"
+      />
     </div>
   );
 }
@@ -159,18 +261,30 @@ export function UsersManager({
 function UserRow({
   user,
   isSelf,
+  selected,
+  onToggle,
   onEdit,
   onDelete,
   onInvite,
 }: {
   user: ManagedUser;
   isSelf: boolean;
+  selected: boolean;
+  onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onInvite: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex items-center gap-3 px-5 py-4">
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={onToggle}
+        className="h-4 w-4 shrink-0 rounded border-border accent-primary"
+        aria-label={`Sélectionner ${user.name || user.email}`}
+      />
+    <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
           {(user.name || user.email).charAt(0).toUpperCase()}
@@ -234,6 +348,7 @@ function UserRow({
           Supprimer
         </Button>
       </div>
+    </div>
     </div>
   );
 }
