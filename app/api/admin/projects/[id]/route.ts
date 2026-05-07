@@ -44,7 +44,7 @@ export async function PATCH(
     entityId: id,
     action: "updated",
     metadata: parsed.data as Record<string, unknown>,
-  }).catch(() => {});
+  });
 
   return NextResponse.json({ ok: true, project: updated });
 }
@@ -73,7 +73,7 @@ export async function DELETE(
     entityId: id,
     action: "deleted",
     metadata: { name: project.name },
-  }).catch(() => {});
+  });
 
   return NextResponse.json({ ok: true });
 }

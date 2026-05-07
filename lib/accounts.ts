@@ -48,9 +48,14 @@ export async function logActivity(params: {
   action: string;
   metadata?: Record<string, unknown>;
 }) {
+  let userId = params.userId ?? null;
+  if (userId) {
+    const exists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (!exists) userId = null;
+  }
   await prisma.activityLog.create({
     data: {
-      userId: params.userId ?? null,
+      userId,
       entityType: params.entityType,
       entityId: params.entityId,
       action: params.action,
