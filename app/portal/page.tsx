@@ -47,8 +47,9 @@ export default async function PortalHome({
         orderBy: { createdAt: "desc" },
         take: 3,
       }),
-      prisma.prospect.findUnique({
+      prisma.prospect.findFirst({
         where: { userId },
+        orderBy: { createdAt: "desc" },
         include: { questionnaire: { select: { id: true } } },
       }),
     ]);

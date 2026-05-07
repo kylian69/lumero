@@ -49,7 +49,7 @@ export default async function ClientDetailPage({
         orderBy: { createdAt: "desc" },
         take: 10,
       },
-      prospect: true,
+      prospects: { orderBy: { createdAt: "desc" }, take: 1 },
       clientNotes: {
         orderBy: { createdAt: "desc" },
         include: { author: { select: { name: true, email: true } } },
@@ -175,9 +175,9 @@ export default async function ClientDetailPage({
                 <Calendar className="h-4 w-4" />
                 Client depuis le {formatDate(client.createdAt)}
               </div>
-              {client.prospect && (
+              {client.prospects[0] && (
                 <Link
-                  href={`/admin/prospects/${client.prospect.id}`}
+                  href={`/admin/prospects/${client.prospects[0].id}`}
                   className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
                 >
                   Voir la fiche prospect →

@@ -29,7 +29,7 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next");
-  const [email, setEmail] = React.useState("");
+  const [email, setEmail] = React.useState(params.get("email") ?? "");
   const [password, setPassword] = React.useState("");
   const [otp, setOtp] = React.useState("");
   const [needOtp, setNeedOtp] = React.useState(false);

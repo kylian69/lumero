@@ -30,21 +30,6 @@ export async function POST(
     phone: prospect.phone ?? undefined,
   });
 
-  // Si l'utilisateur existait déjà, vérifier qu'il n'est pas déjà rattaché
-  // à un autre prospect (relation 1-1 sur userId).
-  const otherProspect = await prisma.prospect.findUnique({
-    where: { userId: user.id },
-  });
-  if (otherProspect && otherProspect.id !== id) {
-    return NextResponse.json(
-      {
-        error:
-          "Un client avec cet email est déjà rattaché à un autre prospect.",
-      },
-      { status: 409 },
-    );
-  }
-
   await prisma.prospect.update({
     where: { id },
     data: {

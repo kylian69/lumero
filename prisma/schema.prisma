@@ -33,10 +33,11 @@ model User {
   emailVerified   DateTime?
   twoFactorSecret String?
   twoFactorEnabled Boolean  @default(false)
+  mustChangePassword Boolean @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  prospect        Prospect?
+  prospects       Prospect[]
   projects        Project[]
   subscriptions   Subscription[]
   tickets         SupportTicket[]       @relation("TicketAuthor")
@@ -104,7 +105,7 @@ enum ProspectSource {
 
 model Prospect {
   id              String         @id @default(cuid())
-  userId          String?        @unique
+  userId          String?
   user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   companyName     String
