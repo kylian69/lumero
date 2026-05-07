@@ -13,6 +13,9 @@ import {
   RefreshCw,
   Trash2,
   Clock,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import { formatRelative } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -50,10 +53,39 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
   const [loadingId, setLoadingId] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<Record<string, string>>({});
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
+  const [editingDomainId, setEditingDomainId] = React.useState<string | null>(null);
+  const [domainInput, setDomainInput] = React.useState("");
 
   function setMsg(projectId: string, msg: string) {
     setMessages((prev) => ({ ...prev, [projectId]: msg }));
     setTimeout(() => setMessages((prev) => ({ ...prev, [projectId]: "" })), 4000);
+  }
+
+  function startEditDomain(p: Project) {
+    setEditingDomainId(p.id);
+    setDomainInput(p.domain ?? "");
+  }
+
+  async function saveDomain(projectId: string) {
+    const value = domainInput.trim() || null;
+    try {
+      const res = await fetch(`/api/admin/projects/${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: value }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setProjects((prev) =>
+          prev.map((p) => (p.id === projectId ? { ...p, domain: value } : p))
+        );
+        setEditingDomainId(null);
+      } else {
+        setMsg(projectId, data.error ?? "Erreur lors de la mise à jour du domaine");
+      }
+    } catch {
+      setMsg(projectId, "Erreur réseau");
+    }
   }
 
   async function createProject() {
@@ -244,11 +276,55 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                     <span className="rounded-full bg-background px-2 py-0.5 text-xs font-medium text-foreground">
                       {p.planType}
                     </span>
-                    {p.domain && (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    {editingDomainId === p.id ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Globe className="h-3 w-3 text-muted-foreground" />
+                        <input
+                          type="text"
+                          value={domainInput}
+                          onChange={(e) => setDomainInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveDomain(p.id);
+                            if (e.key === "Escape") setEditingDomainId(null);
+                          }}
+                          placeholder="exemple.fr"
+                          autoFocus
+                          className="h-6 w-40 rounded border border-input bg-background px-2 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                        />
+                        <button
+                          onClick={() => saveDomain(p.id)}
+                          className="rounded p-0.5 text-primary hover:bg-primary/10"
+                          title="Enregistrer"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setEditingDomainId(null)}
+                          className="rounded p-0.5 text-muted-foreground hover:bg-muted"
+                          title="Annuler"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </span>
+                    ) : p.domain ? (
+                      <button
+                        onClick={() => startEditDomain(p)}
+                        className="group inline-flex items-center gap-1 rounded px-1 text-xs text-muted-foreground hover:text-foreground"
+                        title="Modifier le domaine"
+                      >
                         <Globe className="h-3 w-3" />
                         {p.domain}
-                      </span>
+                        <Pencil className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-60" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => startEditDomain(p)}
+                        className="inline-flex items-center gap-1 rounded px-1 text-xs text-muted-foreground/60 hover:text-primary"
+                        title="Ajouter un domaine"
+                      >
+                        <Globe className="h-3 w-3" />
+                        Ajouter un domaine
+                      </button>
                     )}
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
