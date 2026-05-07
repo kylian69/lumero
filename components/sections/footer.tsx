@@ -42,6 +42,11 @@ export function Footer() {
                 Mentions légales
               </a>
             </li>
+            <li>
+              <a href="/politique-confidentialite" className="hover:text-foreground">
+                Confidentialité
+              </a>
+            </li>
           </ul>
         </nav>
       </div>
