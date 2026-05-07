@@ -263,6 +263,32 @@ export function emailChangedNotifyTemplate(args: { newEmail: string }): Template
   return { subject, html, text };
 }
 
+// ───────────────────────── Bienvenue prospect → compte créé ─────────────────────────
+
+export function welcomeProspectTemplate(args: {
+  companyName: string;
+  email: string;
+  tempPassword: string;
+}): Template {
+  const loginUrl = `${appUrl()}/login`;
+  const subject = "Votre espace client Lumero est prêt";
+  const html = layout(
+    subject,
+    `<p>Bonjour ${escape(args.companyName)},</p>
+     <p>Merci pour votre questionnaire ! Nous avons créé votre espace client Lumero.</p>
+     <p>Voici vos identifiants de connexion :</p>
+     <ul>
+       <li><strong>Email :</strong> ${escape(args.email)}</li>
+       <li><strong>Mot de passe temporaire :</strong> <code style="background:#f4f4f4;padding:2px 6px;border-radius:4px;font-family:monospace;">${escape(args.tempPassword)}</code></li>
+     </ul>
+     <p>Pour votre sécurité, vous devrez choisir un nouveau mot de passe lors de votre première connexion.</p>`,
+    loginUrl,
+    "Accéder à mon espace",
+  );
+  const text = `Bonjour ${args.companyName},\n\nVotre espace client Lumero a été créé.\n\nEmail : ${args.email}\nMot de passe temporaire : ${args.tempPassword}\n\nVous devrez choisir un nouveau mot de passe à la première connexion.\n\nConnectez-vous : ${loginUrl}`;
+  return { subject, html, text };
+}
+
 // ───────────────────────── Preview publiée → client ─────────────────────────
 
 export function previewPublishedTemplate(args: {

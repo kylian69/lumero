@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { logActivity } from "@/lib/accounts";
+import { ensureClientUser, logActivity } from "@/lib/accounts";
 import { sendEmail } from "@/lib/email/client";
 import { getAdminEmails } from "@/lib/email/recipients";
-import { prospectCreatedTemplate } from "@/lib/email/templates";
+import {
+  prospectCreatedTemplate,
+  welcomeProspectTemplate,
+} from "@/lib/email/templates";
 
 const schema = z.object({
   metier: z.string().optional().default(""),
@@ -41,6 +44,12 @@ export async function POST(req: Request) {
     const data = parsed.data;
 
     const email = data.email.toLowerCase().trim();
+
+    // Si un compte utilisateur existe déjà avec cet email, on le signale
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return NextResponse.json({ accountExists: true }, { status: 200 });
+    }
 
     // Cherche un prospect existant pour cet email
     let prospect = await prisma.prospect.findFirst({
@@ -105,6 +114,39 @@ export async function POST(req: Request) {
       entityId: prospect.id,
       action: "questionnaire_submitted",
     });
+
+    // Crée le compte client avec un mot de passe temporaire
+    const { user, tempPassword } = await ensureClientUser({
+      email,
+      name: data.entreprise,
+      phone: data.telephone || undefined,
+    });
+
+    // Lie le prospect au compte utilisateur s'il ne l'est pas déjà
+    if (!prospect.userId) {
+      await prisma.prospect.update({
+        where: { id: prospect.id },
+        data: { userId: user.id },
+      });
+    }
+
+    await logActivity({
+      userId: user.id,
+      entityType: "user",
+      entityId: user.id,
+      action: "account_created",
+      metadata: { source: "questionnaire", prospectId: prospect.id },
+    });
+
+    // Envoie le mot de passe temporaire au prospect
+    if (tempPassword) {
+      const tpl = welcomeProspectTemplate({
+        companyName: data.entreprise,
+        email,
+        tempPassword,
+      });
+      await sendEmail({ to: email, ...tpl });
+    }
 
     if (isNewProspect) {
       const adminEmails = await getAdminEmails();

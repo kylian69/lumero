@@ -36,6 +36,7 @@ export async function ensureClientUser(params: {
       phone: params.phone ?? null,
       passwordHash,
       role: "CLIENT",
+      mustChangePassword: true,
     },
   });
   return { user, tempPassword };

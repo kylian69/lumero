@@ -38,6 +38,16 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // Redirect users who must change their password to the dedicated page
+  if (
+    token &&
+    (token as { mustChangePassword?: boolean }).mustChangePassword === true &&
+    isPortalPath &&
+    pathname !== "/portal/change-password"
+  ) {
+    return NextResponse.redirect(new URL("/portal/change-password", req.url));
+  }
+
   return NextResponse.next();
 }
 
