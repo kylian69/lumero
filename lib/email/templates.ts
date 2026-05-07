@@ -263,6 +263,44 @@ export function emailChangedNotifyTemplate(args: { newEmail: string }): Template
   return { subject, html, text };
 }
 
+// ───────────────────────── Signup verification ─────────────────────────
+
+export function signupVerifyTemplate(args: {
+  verifyUrl: string;
+  email: string;
+}): Template {
+  const subject = "Confirmez votre compte Lumero";
+  const html = layout(
+    subject,
+    `<p>Bonjour,</p>
+     <p>Vous venez de créer un compte Lumero avec l'adresse <strong>${escape(args.email)}</strong>.</p>
+     <p>Pour finaliser la création, confirmez votre adresse email en cliquant sur le bouton ci-dessous. Ce lien expire dans 30 minutes et n'est utilisable qu'une seule fois.</p>
+     <p style="color:#666;font-size:12px;">Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>`,
+    args.verifyUrl,
+    "Confirmer mon compte",
+  );
+  const text = `Confirmez votre compte Lumero (${args.email}) : ${args.verifyUrl}\nLien valable 30 minutes.`;
+  return { subject, html, text };
+}
+
+export function passwordResetTemplate(args: {
+  resetUrl: string;
+  email: string;
+}): Template {
+  const subject = "Réinitialisation de votre mot de passe Lumero";
+  const html = layout(
+    subject,
+    `<p>Bonjour,</p>
+     <p>Une réinitialisation de mot de passe a été demandée pour le compte <strong>${escape(args.email)}</strong>.</p>
+     <p>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe. Ce lien expire dans 30 minutes et n'est utilisable qu'une seule fois.</p>
+     <p style="color:#666;font-size:12px;">Si vous n'êtes pas à l'origine de cette demande, ignorez ce message — votre mot de passe restera inchangé.</p>`,
+    args.resetUrl,
+    "Réinitialiser mon mot de passe",
+  );
+  const text = `Réinitialisez votre mot de passe Lumero : ${args.resetUrl}\nLien valable 30 minutes. Ignorez si vous n'êtes pas à l'origine de la demande.`;
+  return { subject, html, text };
+}
+
 // ───────────────────────── Bienvenue prospect → compte créé ─────────────────────────
 
 export function welcomeProspectTemplate(args: {

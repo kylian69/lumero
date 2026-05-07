@@ -51,6 +51,32 @@ model User {
   verifications   VerificationCode[]
   invitations     Invitation[]          @relation("InvitedUser")
   invitationsSent Invitation[]          @relation("InvitationAuthor")
+  passwordResetTokens PasswordResetToken[]
+}
+
+model SignupToken {
+  id           String    @id @default(cuid())
+  email        String
+  tokenHash    String    @unique
+  passwordHash String
+  name         String?
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([email])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Invitation {
