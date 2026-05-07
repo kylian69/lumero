@@ -5,6 +5,7 @@ import { logActivity } from "@/lib/accounts";
 import { sendEmail } from "@/lib/email/client";
 import { getAdminEmails } from "@/lib/email/recipients";
 import { prospectCreatedTemplate } from "@/lib/email/templates";
+import { getSession } from "@/lib/session";
 
 const schema = z.object({
   metier: z.string().optional().default(""),
@@ -41,10 +42,7 @@ export async function POST(req: Request) {
     const data = parsed.data;
 
     const email = data.email.toLowerCase().trim();
-
-    // Vérifie si un compte utilisateur existe déjà pour cet email
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    const accountExists = !!existingUser;
+    const session = await getSession();
 
     const questionnairePayload = {
       metier: data.metier || null,
@@ -65,80 +63,70 @@ export async function POST(req: Request) {
       message: data.message || null,
     };
 
-    let prospect;
-    let isNewProspect = false;
+    let userId: string | null = null;
 
-    if (accountExists) {
-      // Le client a déjà un compte : on crée toujours un nouveau prospect
-      // pour cette nouvelle demande de site, lié à son compte existant.
-      prospect = await prisma.prospect.create({
-        data: {
-          companyName: data.entreprise,
-          contactName: data.entreprise,
-          email,
-          phone: data.telephone || null,
-          status: "NEW",
-          source: "QUESTIONNAIRE",
-          userId: existingUser.id,
-          questionnaire: { create: questionnairePayload },
-        },
-        include: { questionnaire: true },
-      });
-      isNewProspect = true;
+    if (session?.user) {
+      // Utilisateur connecté : on utilise directement son compte
+      userId = session.user.id;
     } else {
-      // Pas de compte : trouve ou crée un prospect par email
-      prospect = await prisma.prospect.findFirst({
+      // Utilisateur non connecté : on vérifie si l'email est déjà connu
+      const existingUser = await prisma.user.findUnique({
         where: { email },
-        include: { questionnaire: true },
+        select: { id: true },
       });
+      if (existingUser) {
+        // Un compte existe → l'utilisateur doit se connecter
+        return NextResponse.json({ requiresLogin: true });
+      }
 
-      if (!prospect) {
-        prospect = await prisma.prospect.create({
-          data: {
-            companyName: data.entreprise,
-            contactName: data.entreprise,
-            email,
-            phone: data.telephone || null,
-            status: "NEW",
-            source: "QUESTIONNAIRE",
-          },
-          include: { questionnaire: true },
-        });
-        isNewProspect = true;
-      } else if (prospect.questionnaire) {
-        await prisma.questionnaireResponse.update({
-          where: { id: prospect.questionnaire.id },
-          data: questionnairePayload,
-        });
-      } else {
-        await prisma.questionnaireResponse.create({
-          data: { ...questionnairePayload, prospectId: prospect.id },
-        });
+      const existingProspect = await prisma.prospect.findFirst({
+        where: { email },
+        select: { id: true },
+      });
+      if (existingProspect) {
+        // Une demande existe déjà → l'utilisateur doit se connecter
+        return NextResponse.json({ requiresLogin: true });
       }
     }
+
+    // Crée systématiquement un nouveau prospect pour cette demande
+    const prospect = await prisma.prospect.create({
+      data: {
+        companyName: data.entreprise,
+        contactName: data.entreprise,
+        email,
+        phone: data.telephone || null,
+        status: "NEW",
+        source: "QUESTIONNAIRE",
+        ...(userId ? { userId } : {}),
+        questionnaire: { create: questionnairePayload },
+      },
+    });
 
     await logActivity({
       entityType: "prospect",
       entityId: prospect.id,
-      action: isNewProspect ? "created" : "questionnaire_submitted",
+      action: "created",
       metadata: { source: "questionnaire" },
     });
 
-    if (isNewProspect) {
-      const adminEmails = await getAdminEmails();
-      if (adminEmails.length > 0) {
-        const tpl = prospectCreatedTemplate({
-          id: prospect.id,
-          companyName: prospect.companyName,
-          email: prospect.email,
-          phone: prospect.phone,
-          source: "QUESTIONNAIRE",
-        });
-        await sendEmail({ to: adminEmails, ...tpl });
-      }
+    const adminEmails = await getAdminEmails();
+    if (adminEmails.length > 0) {
+      const tpl = prospectCreatedTemplate({
+        id: prospect.id,
+        companyName: prospect.companyName,
+        email: prospect.email,
+        phone: prospect.phone,
+        source: "QUESTIONNAIRE",
+      });
+      await sendEmail({ to: adminEmails, ...tpl });
     }
 
-    return NextResponse.json({ ok: true, prospectId: prospect.id, accountExists });
+    return NextResponse.json({
+      ok: true,
+      prospectId: prospect.id,
+      accountExists: !!userId,
+    });
   } catch (err) {
     console.error("[/api/questionnaire]", err);
     return NextResponse.json(

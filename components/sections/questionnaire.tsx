@@ -215,6 +215,7 @@ export function Questionnaire() {
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [submitResult, setSubmitResult] = React.useState<boolean>(false);
   const [accountExists, setAccountExists] = React.useState(false);
+  const [requiresLogin, setRequiresLogin] = React.useState(false);
 
   React.useEffect(() => {
     if (METIERS_MORE.some((m) => m.id === answers.metier)) {
@@ -320,6 +321,7 @@ export function Questionnaire() {
     setSubmitError(null);
     setSubmitResult(false);
     setAccountExists(false);
+    setRequiresLogin(false);
     const start = Date.now();
     const duration = 2800;
     let cancelled = false;
@@ -342,6 +344,8 @@ export function Questionnaire() {
         if (cancelled) return;
         if (!res.ok) {
           setSubmitError(data?.error || "Erreur lors de l'envoi.");
+        } else if (data?.requiresLogin) {
+          setRequiresLogin(true);
         } else {
           if (data?.accountExists) setAccountExists(true);
           setSubmitResult(true);
@@ -1056,6 +1060,42 @@ export function Questionnaire() {
                         >
                           Réessayer
                         </Button>
+                      </motion.div>
+                    ) : requiresLogin ? (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex flex-col items-center"
+                      >
+                        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                          <Lock className="h-8 w-8" aria-hidden />
+                        </span>
+                        <h3 className="mt-6 text-2xl font-semibold tracking-tight">
+                          Connexion requise
+                        </h3>
+                        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                          L&apos;adresse{" "}
+                          <span className="font-medium text-foreground">
+                            {answers.email}
+                          </span>{" "}
+                          est déjà associée à un compte ou à une demande
+                          existante. Connectez-vous pour soumettre une nouvelle
+                          demande.
+                        </p>
+                        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+                          <Button size="lg" asChild>
+                            <a href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + "#questionnaire" : "/")}`}>
+                              Se connecter
+                            </a>
+                          </Button>
+                          <Button
+                            size="lg"
+                            variant="outline"
+                            onClick={() => goTo(STEPS.indexOf("coordonnees"))}
+                          >
+                            Modifier l&apos;email
+                          </Button>
+                        </div>
                       </motion.div>
                     ) : (
                       <motion.div
