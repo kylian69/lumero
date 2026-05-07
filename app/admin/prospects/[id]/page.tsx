@@ -23,6 +23,11 @@ import { formatDateTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { ActivityTimeline } from "@/components/admin/activity-timeline";
 import { getProspectActivity } from "@/lib/activity";
+import { InfoBadge } from "@/components/admin/info-badge";
+import {
+  getObjectifDetails,
+  getFonctionnaliteDetails,
+} from "@/lib/questionnaire-options";
 
 export const dynamic = "force-dynamic";
 
@@ -131,11 +136,17 @@ export default async function ProspectDetailPage({
                 {objectifs.length > 0 && (
                   <Section label="Objectifs" icon={Target}>
                     <div className="flex flex-wrap gap-1.5">
-                      {objectifs.map((o) => (
-                        <Badge key={o} variant="default">
-                          {o}
-                        </Badge>
-                      ))}
+                      {objectifs.map((o) => {
+                        const details = getObjectifDetails(o);
+                        return (
+                          <InfoBadge
+                            key={o}
+                            variant="default"
+                            label={details.label}
+                            description={details.description}
+                          />
+                        );
+                      })}
                       {prospect.questionnaire.objectifCustom && (
                         <Badge variant="neutral">
                           {prospect.questionnaire.objectifCustom}
@@ -180,11 +191,17 @@ export default async function ProspectDetailPage({
                 {fonctionnalites.length > 0 && (
                   <Section label="Fonctionnalités demandées">
                     <div className="flex flex-wrap gap-1.5">
-                      {fonctionnalites.map((f) => (
-                        <Badge key={f} variant="outline">
-                          {f}
-                        </Badge>
-                      ))}
+                      {fonctionnalites.map((f) => {
+                        const details = getFonctionnaliteDetails(f);
+                        return (
+                          <InfoBadge
+                            key={f}
+                            variant="outline"
+                            label={details.label}
+                            description={details.description}
+                          />
+                        );
+                      })}
                     </div>
                   </Section>
                 )}
