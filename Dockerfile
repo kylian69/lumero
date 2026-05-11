@@ -59,7 +59,7 @@ USER nextjs
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["node", "server.js"]
