@@ -7,7 +7,7 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-package-lock.json
+#package-lock.json
 prisma/dev.db
 
 # testing
