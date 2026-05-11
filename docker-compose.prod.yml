@@ -3,10 +3,10 @@
 # - Postgres runs on the same VM with a persistent named volume.
 # - deploy-agent listens for signed webhooks from GitHub Actions and triggers
 #   `docker compose pull && up -d` when a new image is published.
+# - cloudflared creates outbound tunnels to Cloudflare for TLS + DDoS protection
+#   without exposing any port on the host.
 #
 # All secrets are read from the .env file on the host (see .env.prod.example).
-# The deploy-agent port is bound to 127.0.0.1 only; Cloudflare Tunnel will
-# expose it publicly once configured.
 
 services:
   postgres:
@@ -72,14 +72,31 @@ services:
       - ./docker/webhook/hooks.yaml:/etc/webhook/hooks.yaml:ro
       - ./scripts/deploy.sh:/scripts/deploy.sh:ro
       - .:/workspace
-    ports:
-      - "127.0.0.1:9000:9000"
     networks:
       - lume
     logging:
       driver: json-file
       options:
         max-size: "10m"
+        max-file: "3"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: lume-cloudflared
+    restart: unless-stopped
+    command: tunnel --config /etc/cloudflared/tunnel.yaml run
+    volumes:
+      - ./docker/cloudflare/tunnel.yaml:/etc/cloudflared/tunnel.yaml:ro
+      - ./docker/cloudflare/credentials.json:/etc/cloudflared/credentials.json:ro
+    networks:
+      - lume
+    depends_on:
+      app:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
         max-file: "3"
 
 networks:
