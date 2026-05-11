@@ -50,7 +50,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.uid = (user as { id: string }).id;
         token.role = (user as { role: Role }).role;
-        token.mustChangePassword = (user as { mustChangePassword: boolean }).mustChangePassword ?? false;
+        token.mustChangePassword = (user as unknown as { mustChangePassword?: boolean }).mustChangePassword ?? false;
       }
       // Allow client-side update() call to refresh mustChangePassword in token
       if (trigger === "update" && session?.mustChangePassword === false) {
