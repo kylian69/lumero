@@ -33,7 +33,7 @@ services:
         max-file: "3"
 
   app:
-    image: ${IMAGE:-ghcr.io/kylian69/lume:latest}
+    image: ${IMAGE:-ghcr.io/kylian69/lumero:latest}
     container_name: lume-app
     restart: unless-stopped
     env_file:

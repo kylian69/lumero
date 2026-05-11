@@ -1,7 +1,7 @@
 #!/bin/bash
 # Pull a new image tag and restart the app service.
 # Called by the deploy-agent webhook receiver.
-# Argument: $1 = full image reference (e.g. ghcr.io/kylian69/lume:sha-abcdef)
+# Argument: $1 = full image reference (e.g. ghcr.io/kylian69/lumero:sha-abcdef)
 
 set -euo pipefail
 
