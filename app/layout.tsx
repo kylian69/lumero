@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthSessionProvider } from "@/components/session-provider";
+import { CookieConsentProvider } from "@/components/cookie-consent/provider";
+import { CookieBanner } from "@/components/cookie-consent/banner";
+import { CookiePreferencesModal } from "@/components/cookie-consent/preferences-modal";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -168,15 +171,19 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans min-h-screen bg-background text-foreground">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthSessionProvider>{children}</AuthSessionProvider>
-          <Toaster position="top-right" richColors />
-        </ThemeProvider>
+        <CookieConsentProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthSessionProvider>{children}</AuthSessionProvider>
+            <Toaster position="top-right" richColors />
+            <CookieBanner />
+            <CookiePreferencesModal />
+          </ThemeProvider>
+        </CookieConsentProvider>
       </body>
     </html>
   );
