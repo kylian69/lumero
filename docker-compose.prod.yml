@@ -1,0 +1,25 @@
+# Production compose for Lume.
+# - Pulls image built by CI from GHCR (override IMAGE env var to pin a SHA).
+# - DATABASE_URL points to the dedicated Postgres VM (set in .env on the host).
+# - All secrets are read from .env on the host; do not commit them.
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/kylian69/lume:latest}
+    container_name: lume-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
