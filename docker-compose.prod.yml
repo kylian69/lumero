@@ -84,10 +84,9 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: lume-cloudflared
     restart: unless-stopped
-    command: tunnel --config /etc/cloudflared/tunnel.yaml run
-    volumes:
-      - ./docker/cloudflare/tunnel.yaml:/etc/cloudflared/tunnel.yaml:ro
-      - ./docker/cloudflare/credentials.json:/etc/cloudflared/credentials.json:ro
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?missing}
     networks:
       - lume
     depends_on:
