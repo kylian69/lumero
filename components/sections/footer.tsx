@@ -1,4 +1,5 @@
 import { Logo } from "@/components/logo";
+import { ManageCookiesLink } from "@/components/cookie-consent/manage-cookies-link";
 
 export function Footer() {
   return (
@@ -47,6 +48,7 @@ export function Footer() {
                 Confidentialité
               </a>
             </li>
+            <ManageCookiesLink />
           </ul>
         </nav>
       </div>
