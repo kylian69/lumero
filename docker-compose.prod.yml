@@ -1,15 +1,48 @@
 # Production compose for Lume.
-# - Pulls image built by CI from GHCR (override IMAGE env var to pin a SHA).
-# - DATABASE_URL points to the dedicated Postgres VM (set in .env on the host).
-# - All secrets are read from .env on the host; do not commit them.
+# - App image is pulled from GHCR (tag pinned via IMAGE env var or :latest by default).
+# - Postgres runs on the same VM with a persistent named volume.
+# - deploy-agent listens for signed webhooks from GitHub Actions and triggers
+#   `docker compose pull && up -d` when a new image is published.
+# - cloudflared creates outbound tunnels to Cloudflare for TLS + DDoS protection
+#   without exposing any port on the host.
+#
+# All secrets are read from the .env file on the host (see .env.prod.example).
 
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: lume-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?missing}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?missing}
+      POSTGRES_DB: ${POSTGRES_DB:?missing}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - lume
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   app:
     image: ${IMAGE:-ghcr.io/kylian69/lume:latest}
     container_name: lume-app
     restart: unless-stopped
     env_file:
       - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lume
     ports:
       - "127.0.0.1:3000:3000"
     healthcheck:
@@ -23,3 +56,52 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  deploy-agent:
+    build:
+      context: .
+      dockerfile: docker/deploy-agent.Dockerfile
+    image: lume-deploy-agent:local
+    container_name: lume-deploy-agent
+    restart: unless-stopped
+    environment:
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?missing}
+      COMPOSE_PROJECT_DIR: /workspace
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/webhook/hooks.yaml:/etc/webhook/hooks.yaml:ro
+      - ./scripts/deploy.sh:/scripts/deploy.sh:ro
+      - .:/workspace
+    networks:
+      - lume
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: lume-cloudflared
+    restart: unless-stopped
+    command: tunnel --config /etc/cloudflared/tunnel.yaml run
+    volumes:
+      - ./docker/cloudflare/tunnel.yaml:/etc/cloudflared/tunnel.yaml:ro
+      - ./docker/cloudflare/credentials.json:/etc/cloudflared/credentials.json:ro
+    networks:
+      - lume
+    depends_on:
+      app:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+networks:
+  lume:
+    driver: bridge
+
+volumes:
+  postgres-data:

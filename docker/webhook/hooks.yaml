@@ -1,0 +1,18 @@
+# Hook config for adnanh/webhook.
+# Validates an HMAC-SHA256 signature posted by GitHub Actions
+# in the `X-Hub-Signature-256` header, then runs deploy.sh.
+
+- id: deploy-lume
+  execute-command: /scripts/deploy.sh
+  command-working-directory: /workspace
+  response-message: "deploy triggered"
+  pass-arguments-to-command:
+    - source: payload
+      name: image
+  trigger-rule:
+    match:
+      type: payload-hmac-sha256
+      secret: '{{ getenv "WEBHOOK_SECRET" }}'
+      parameter:
+        source: header
+        name: X-Hub-Signature-256
