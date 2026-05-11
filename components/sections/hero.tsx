@@ -37,9 +37,9 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mx-auto max-w-4xl text-balance text-4xl font-semibold tracking-tight sm:text-6xl lg:text-7xl"
         >
-          Votre présence digitale est déjà{" "}
+          Votre site internet professionnel,{" "}
           <span className="bg-gradient-to-r from-primary via-indigo-500 to-primary bg-clip-text text-transparent">
-            prête.
+            livré en 24h.
           </span>
         </motion.h1>
 
@@ -49,8 +49,9 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mx-auto mt-6 max-w-2xl text-balance text-lg text-muted-foreground sm:text-xl"
         >
-          Choisissez. Répondez. Brillez. Un site professionnel optimisé et
-          déployé en moins de 24h.
+          Lumero crée, héberge et référence votre site vitrine professionnel en
+          moins de 24 heures. Modèles métier, SEO inclus, performance optimisée.
+          À partir de 99€.
         </motion.p>
 
         <motion.div
