@@ -292,7 +292,7 @@ function UserRow({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-semibold">{user.name || "—"}</p>
-            <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>
+            <Badge variant={user.role === "ADMIN" ? "default" : "neutral"}>
               {user.role === "ADMIN" ? (
                 <>
                   <Shield className="mr-1 h-3 w-3" />
