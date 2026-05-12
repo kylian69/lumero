@@ -6,11 +6,13 @@ import {
   createGithubRepo,
   createGithubBranch,
   createGithubWebhook,
+  commitFilesToBranch,
 } from "@/lib/github";
 import {
   provisionPreview,
   previewUrlForSlug,
 } from "@/lib/preview-orchestrator";
+import { defaultTemplate } from "@/lib/preview-template";
 
 export async function POST(
   _req: Request,
@@ -36,7 +38,16 @@ export async function POST(
   // 2. Create the preview branch from main
   await createGithubBranch(fullName, project.githubPreviewBranch);
 
-  // 3. Register a push webhook so the orchestrator rebuilds on commits.
+  // 3. Commit the default site template into the preview branch so the
+  //    orchestrator has something to build on first start.
+  await commitFilesToBranch(
+    fullName,
+    project.githubPreviewBranch,
+    defaultTemplate({ slug: project.slug, projectName: project.name }),
+    "chore: scaffold default preview (nginx static site)"
+  );
+
+  // 4. Register a push webhook so the orchestrator rebuilds on commits.
   //    Only if both PREVIEW_WEBHOOK_URL and PREVIEW_GITHUB_WEBHOOK_SECRET are
   //    configured — otherwise skip silently (e.g. local dev).
   const webhookUrl = process.env.PREVIEW_WEBHOOK_URL;
@@ -49,7 +60,7 @@ export async function POST(
     }
   }
 
-  // 4. Register the preview with the orchestrator (no container yet).
+  // 5. Register the preview with the orchestrator (no container yet).
   await provisionPreview({
     id: project.id,
     slug: project.slug,
@@ -57,7 +68,7 @@ export async function POST(
     githubBranch: project.githubPreviewBranch,
   });
 
-  // 5. Persist in DB
+  // 6. Persist in DB
   const updated = await prisma.project.update({
     where: { id },
     data: {
