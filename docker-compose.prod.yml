@@ -32,6 +32,35 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  postgres-backup:
+    image: prodrigestivill/postgres-backup-local:17-alpine
+    container_name: lume-postgres-backup
+    restart: unless-stopped
+    user: postgres:postgres
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:?missing}
+      POSTGRES_USER: ${POSTGRES_USER:?missing}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?missing}
+      POSTGRES_EXTRA_OPTS: "-Z6 --schema=public --blobs"
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+      HEALTHCHECK_PORT: 8080
+    volumes:
+      - postgres-backups:/backups
+    networks:
+      - lume
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
   app:
     image: ${IMAGE:-ghcr.io/kylian69/lumero:latest}
     container_name: lume-app
@@ -98,9 +127,26 @@ services:
         max-size: "5m"
         max-file: "3"
 
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: lume-uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - uptime-kuma-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - lume
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
 networks:
   lume:
     driver: bridge
 
 volumes:
   postgres-data:
+  postgres-backups:
+  uptime-kuma-data:
