@@ -23,7 +23,7 @@ mise en production du site :
  - à savoir que je peux mettre à dispoisition des ressources en local chez moi pour mettre en place, cela l'idéal serait d'héberger l'application chez moi pour éviter tous les frais et assurer une souverainté
 
 - pour les preview clients 
-    - je veux également héberger les preview clients en local pour éviter tous les frais et assurer une souverainté
+    - je veux également héberger les preview clients en local pour éviter tous les frais et assurer une souverainté (qui sont actuellement sur vercel)
     - les preview clients ne devronts pas nécessiter beaucoup de ressource
 
 comment imagine tu la mise en place de tout ça ? qu'est ce que tu me conseil et propose pour mettre en place cela ? 
