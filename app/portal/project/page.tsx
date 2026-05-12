@@ -95,26 +95,25 @@ export default async function PortalProjectPage({
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {p.githubRepoName &&
-                        (p.status === "REVIEW" || p.status === "LIVE") && (
-                          <PreviewControl
-                            projectId={p.id}
-                            initialState={
-                              (["NONE", "STOPPED", "STARTING", "BUILDING", "RUNNING", "ERROR"].includes(
-                                p.previewStatus
-                              )
-                                ? p.previewStatus
-                                : "NONE") as
-                                | "NONE"
-                                | "STOPPED"
-                                | "STARTING"
-                                | "BUILDING"
-                                | "RUNNING"
-                                | "ERROR"
-                            }
-                            initialUrl={p.previewUrl}
-                          />
-                        )}
+                      {p.githubRepoName && (
+                        <PreviewControl
+                          projectId={p.id}
+                          initialState={
+                            (["NONE", "STOPPED", "STARTING", "BUILDING", "RUNNING", "ERROR"].includes(
+                              p.previewStatus
+                            )
+                              ? p.previewStatus
+                              : "NONE") as
+                              | "NONE"
+                              | "STOPPED"
+                              | "STARTING"
+                              | "BUILDING"
+                              | "RUNNING"
+                              | "ERROR"
+                          }
+                          initialUrl={p.previewUrl}
+                        />
+                      )}
                       <Button size="sm" asChild>
                         <Link href={`/portal/customization?projectId=${p.id}`}>
                           <Sparkles className="h-4 w-4" /> Demander une
