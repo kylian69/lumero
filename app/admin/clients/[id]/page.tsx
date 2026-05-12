@@ -35,7 +35,6 @@ export default async function ClientDetailPage({
           previewUrl: true,
           previewStatus: true,
           githubRepoUrl: true,
-          vercelProjectId: true,
           previewPublishedAt: true,
           updatedAt: true,
         },

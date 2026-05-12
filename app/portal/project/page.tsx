@@ -3,6 +3,7 @@ import { Globe, Palette, Target, Sparkles, Info, Clock } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
+import { PreviewControl } from "@/components/portal/preview-control";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
@@ -94,17 +95,25 @@ export default async function PortalProjectPage({
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {p.previewUrl &&
+                      {p.githubRepoName &&
                         (p.status === "REVIEW" || p.status === "LIVE") && (
-                          <Button variant="outline" size="sm" asChild>
-                            <a
-                              href={p.previewUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              Voir mon aperçu
-                            </a>
-                          </Button>
+                          <PreviewControl
+                            projectId={p.id}
+                            initialState={
+                              (["NONE", "STOPPED", "STARTING", "BUILDING", "RUNNING", "ERROR"].includes(
+                                p.previewStatus
+                              )
+                                ? p.previewStatus
+                                : "NONE") as
+                                | "NONE"
+                                | "STOPPED"
+                                | "STARTING"
+                                | "BUILDING"
+                                | "RUNNING"
+                                | "ERROR"
+                            }
+                            initialUrl={p.previewUrl}
+                          />
                         )}
                       <Button size="sm" asChild>
                         <Link href={`/portal/customization?projectId=${p.id}`}>

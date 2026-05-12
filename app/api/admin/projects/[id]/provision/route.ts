@@ -2,8 +2,17 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
-import { createGithubRepo, createGithubBranch } from "@/lib/github";
-import { createVercelProject, registerVercelWebhook } from "@/lib/vercel";
+import {
+  createGithubRepo,
+  createGithubBranch,
+  createGithubWebhook,
+  commitFilesToBranch,
+} from "@/lib/github";
+import {
+  provisionPreview,
+  previewUrlForSlug,
+} from "@/lib/preview-orchestrator";
+import { defaultTemplate } from "@/lib/preview-template";
 
 export async function POST(
   _req: Request,
@@ -26,32 +35,47 @@ export async function POST(
   // 1. Create GitHub repo (auto-initializes main branch)
   const { repoName, repoUrl, fullName } = await createGithubRepo(project.slug);
 
-  // 2. Create preview branch from main
+  // 2. Create the preview branch from main
   await createGithubBranch(fullName, project.githubPreviewBranch);
 
-  // 3. Create Vercel project linked to GitHub repo
-  const { projectId: vercelProjectId } = await createVercelProject(project.slug, fullName);
+  // 3. Commit the default site template into the preview branch so the
+  //    orchestrator has something to build on first start.
+  await commitFilesToBranch(
+    fullName,
+    project.githubPreviewBranch,
+    defaultTemplate({ slug: project.slug, projectName: project.name }),
+    "chore: scaffold default preview (nginx static site)"
+  );
 
-  // 4. Register Vercel webhook (only if APP_URL is a public HTTPS URL)
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  if (appUrl.startsWith("https://")) {
+  // 4. Register a push webhook so the orchestrator rebuilds on commits.
+  //    Only if both PREVIEW_WEBHOOK_URL and PREVIEW_GITHUB_WEBHOOK_SECRET are
+  //    configured — otherwise skip silently (e.g. local dev).
+  const webhookUrl = process.env.PREVIEW_WEBHOOK_URL;
+  const webhookSecret = process.env.PREVIEW_GITHUB_WEBHOOK_SECRET;
+  if (webhookUrl && webhookSecret) {
     try {
-      await registerVercelWebhook(vercelProjectId);
+      await createGithubWebhook(fullName, webhookUrl, webhookSecret);
     } catch (err) {
-      console.warn("[provision] Webhook registration failed (non-fatal):", err);
+      console.warn("[provision] GitHub webhook registration failed (non-fatal):", err);
     }
-  } else {
-    console.info("[provision] Skipping webhook registration — NEXT_PUBLIC_APP_URL is not a public HTTPS URL.");
   }
 
-  // 5. Persist in DB
+  // 5. Register the preview with the orchestrator (no container yet).
+  await provisionPreview({
+    id: project.id,
+    slug: project.slug,
+    githubRepoFullName: fullName,
+    githubBranch: project.githubPreviewBranch,
+  });
+
+  // 6. Persist in DB
   const updated = await prisma.project.update({
     where: { id },
     data: {
       githubRepoName: repoName,
       githubRepoUrl: repoUrl,
-      vercelProjectId,
-      previewStatus: "PROVISIONING",
+      previewStatus: "STOPPED",
+      previewUrl: previewUrlForSlug(project.slug),
     },
   });
 
@@ -60,13 +84,12 @@ export async function POST(
     entityType: "project",
     entityId: id,
     action: "provisioned",
-    metadata: { githubRepoUrl: repoUrl, vercelProjectId },
+    metadata: { githubRepoUrl: repoUrl },
   });
 
   return NextResponse.json({
     ok: true,
     githubRepoUrl: repoUrl,
-    vercelProjectId,
     project: updated,
   });
 }

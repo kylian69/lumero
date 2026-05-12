@@ -33,7 +33,6 @@ type Project = {
   previewUrl: string | null;
   previewStatus: string;
   githubRepoUrl: string | null;
-  vercelProjectId: string | null;
   previewPublishedAt: Date | null;
   updatedAt: Date;
 };
@@ -364,7 +363,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
               </div>
 
               {/* Infrastructure links */}
-              {(p.githubRepoUrl || p.vercelProjectId) && (
+              {p.githubRepoUrl && (
                 <div className="flex flex-wrap gap-2">
                   {p.githubRepoUrl && (
                     <a
