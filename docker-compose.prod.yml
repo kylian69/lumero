@@ -127,6 +127,21 @@ services:
         max-size: "5m"
         max-file: "3"
 
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: lume-uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - uptime-kuma-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - lume
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
 networks:
   lume:
     driver: bridge
@@ -134,3 +149,4 @@ networks:
 volumes:
   postgres-data:
   postgres-backups:
+  uptime-kuma-data:
