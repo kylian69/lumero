@@ -18,4 +18,4 @@ WORKDIR /workspace
 EXPOSE 9000
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["webhook", "-hooks=/etc/webhook/hooks.yaml", "-verbose", "-hotreload", "-port=9000"]
+CMD ["webhook", "-hooks=/etc/webhook/hooks.yaml", "-verbose", "-hotreload", "-template", "-port=9000"]
