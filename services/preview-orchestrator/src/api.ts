@@ -1,0 +1,89 @@
+import { Router } from "express";
+import { z } from "zod";
+import { config } from "./config";
+import { storage } from "./storage";
+import { buildAndStart, destroy, provision, start, stop } from "./lifecycle";
+
+export const api = Router();
+
+api.use((req, res, next) => {
+  const token = req.header("x-internal-token");
+  if (token !== config.INTERNAL_API_TOKEN) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  next();
+});
+
+const provisionBody = z.object({
+  id: z.string().min(1),
+  slug: z.string().regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, "invalid slug"),
+  githubRepoFullName: z.string().regex(/^[\w.-]+\/[\w.-]+$/),
+  githubBranch: z.string().default("preview"),
+});
+
+api.post("/projects", async (req, res) => {
+  const parsed = provisionBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const preview = provision(parsed.data);
+  res.json({ preview });
+});
+
+api.get("/projects/:id", (req, res) => {
+  const preview = storage.byId(req.params.id);
+  if (!preview) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json({ preview });
+});
+
+api.post("/projects/:id/start", async (req, res) => {
+  const preview = storage.byId(req.params.id);
+  if (!preview) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  // Fire and forget: client polls /status
+  start(preview).catch((err) => console.error("[api] start failed:", err));
+  res.json({ preview: storage.byId(req.params.id) });
+});
+
+api.post("/projects/:id/stop", async (req, res) => {
+  const preview = storage.byId(req.params.id);
+  if (!preview) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  await stop(preview);
+  res.json({ preview: storage.byId(req.params.id) });
+});
+
+api.post("/projects/:id/redeploy", async (req, res) => {
+  const preview = storage.byId(req.params.id);
+  if (!preview) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  buildAndStart(preview).catch((err) =>
+    console.error("[api] redeploy failed:", err)
+  );
+  res.json({ preview: storage.byId(req.params.id) });
+});
+
+api.delete("/projects/:id", async (req, res) => {
+  const preview = storage.byId(req.params.id);
+  if (!preview) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  await destroy(preview);
+  res.json({ ok: true });
+});
+
+api.get("/projects", (_req, res) => {
+  res.json({ previews: storage.all() });
+});

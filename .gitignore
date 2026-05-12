@@ -50,3 +50,8 @@ next-env.d.ts
 
 # uploads
 /uploads/
+
+# Preview orchestrator local artifacts
+services/preview-orchestrator/node_modules
+services/preview-orchestrator/dist
+services/preview-orchestrator/data
