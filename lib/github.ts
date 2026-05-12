@@ -77,3 +77,29 @@ export async function createGithubBranch(
     }),
   });
 }
+
+/**
+ * Register a push webhook on a preview repo so the orchestrator can
+ * auto-rebuild on commits. Returns the webhook id if created.
+ */
+export async function createGithubWebhook(
+  fullName: string,
+  url: string,
+  secret: string
+): Promise<{ id: number }> {
+  const data = await ghFetch(`/repos/${fullName}/hooks`, {
+    method: "POST",
+    body: JSON.stringify({
+      name: "web",
+      active: true,
+      events: ["push"],
+      config: {
+        url,
+        content_type: "json",
+        secret,
+        insecure_ssl: "0",
+      },
+    }),
+  });
+  return { id: data.id as number };
+}

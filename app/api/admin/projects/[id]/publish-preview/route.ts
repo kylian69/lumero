@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
 import { sendEmail } from "@/lib/email/client";
 import { previewPublishedTemplate } from "@/lib/email/templates";
+import { startPreview, previewUrlForSlug } from "@/lib/preview-orchestrator";
 
 export async function POST(
   _req: Request,
@@ -23,12 +24,30 @@ export async function POST(
   if (!project) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
-  if (!project.previewUrl) {
+  if (!project.githubRepoName) {
     return NextResponse.json(
-      { error: "Aucune URL de preview disponible. Attendez que le déploiement Vercel soit terminé." },
+      { error: "Projet non provisionné. Cliquez d'abord sur Configurer." },
       { status: 422 }
     );
   }
+
+  // Ensure the preview is running before notifying the client. The
+  // orchestrator's `start` is idempotent; it builds the image on first call
+  // if needed.
+  try {
+    await startPreview(project.id);
+  } catch (err) {
+    return NextResponse.json(
+      {
+        error:
+          "Impossible de démarrer la preview côté orchestrateur. " +
+          (err instanceof Error ? err.message : ""),
+      },
+      { status: 502 }
+    );
+  }
+
+  const previewUrl = previewUrlForSlug(project.slug);
 
   const updated = await prisma.project.update({
     where: { id },
@@ -36,6 +55,7 @@ export async function POST(
       status: "REVIEW",
       previewStatus: "REVIEW_SENT",
       previewPublishedAt: new Date(),
+      previewUrl,
     },
   });
 
@@ -44,15 +64,14 @@ export async function POST(
     entityType: "project",
     entityId: id,
     action: "preview_published",
-    metadata: { previewUrl: project.previewUrl },
+    metadata: { previewUrl },
   });
 
-  // Send email notification to client
   const clientName = project.user.firstName ?? project.user.name ?? null;
   const tpl = previewPublishedTemplate({
     clientName,
     projectName: project.name,
-    previewUrl: project.previewUrl,
+    previewUrl,
   });
   await sendEmail({ to: project.user.email, ...tpl });
 

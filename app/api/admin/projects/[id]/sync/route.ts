@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
-import { getLatestPreviewDeployment } from "@/lib/vercel";
+import {
+  getPreview,
+  previewUrlForSlug,
+  mapStateToPreviewStatus,
+} from "@/lib/preview-orchestrator";
 
 export async function POST(
   _req: Request,
@@ -18,36 +22,33 @@ export async function POST(
   if (!project) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
-  if (!project.vercelProjectId) {
+  if (!project.githubRepoName) {
     return NextResponse.json(
       { error: "Projet non provisionné. Cliquez d'abord sur Configurer." },
       { status: 422 }
     );
   }
 
-  const deployment = await getLatestPreviewDeployment(project.vercelProjectId);
-
-  if (!deployment) {
+  const preview = await getPreview(project.id);
+  if (!preview) {
     return NextResponse.json(
-      { error: "Aucun déploiement de la branche preview trouvé. Avez-vous bien poussé du code ?" },
+      { error: "Preview introuvable côté orchestrateur." },
       { status: 404 }
     );
   }
 
-  if (deployment.state !== "READY") {
-    return NextResponse.json({
-      ok: false,
-      state: deployment.state,
-      message: `Déploiement en état: ${deployment.state}. Réessayez dans quelques instants.`,
-    });
-  }
+  // The public URL is deterministic from the slug; we still refresh it in DB
+  // in case the slug changed (it shouldn't).
+  const url = previewUrlForSlug(project.slug);
+  const status = mapStateToPreviewStatus(preview.state);
+
+  // Don't downgrade REVIEW_SENT — keep that explicit admin state.
+  const nextStatus =
+    project.previewStatus === "REVIEW_SENT" ? "REVIEW_SENT" : status;
 
   const updated = await prisma.project.update({
     where: { id },
-    data: {
-      previewUrl: deployment.url,
-      previewStatus: project.previewStatus === "REVIEW_SENT" ? "REVIEW_SENT" : "READY",
-    },
+    data: { previewUrl: url, previewStatus: nextStatus },
   });
 
   await logActivity({
@@ -55,8 +56,15 @@ export async function POST(
     entityType: "project",
     entityId: id,
     action: "preview_synced",
-    metadata: { previewUrl: deployment.url },
+    metadata: { previewUrl: url, state: preview.state },
   });
 
-  return NextResponse.json({ ok: true, project: updated });
+  return NextResponse.json({
+    ok: true,
+    project: updated,
+    state: preview.state,
+    lastBuiltAt: preview.lastBuiltAt,
+    lastBuiltSha: preview.lastBuiltSha,
+    errorMessage: preview.errorMessage,
+  });
 }
