@@ -14,3 +14,4 @@ prisma/dev.db-journal
 docker-compose*.yml
 Dockerfile
 .dockerignore
+services
