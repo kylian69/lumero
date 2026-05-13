@@ -10,7 +10,8 @@ import {
 } from "@/lib/github";
 import {
   provisionPreview,
-  previewUrlForSlug,
+  previewUrlForProject,
+  previewHostnameForProject,
 } from "@/lib/preview-orchestrator";
 import { defaultTemplate } from "@/lib/preview-template";
 
@@ -61,9 +62,11 @@ export async function POST(
   }
 
   // 5. Register the preview with the orchestrator (no container yet).
+  const hostname = previewHostnameForProject(project.slug, project.id);
   await provisionPreview({
     id: project.id,
     slug: project.slug,
+    hostname,
     githubRepoFullName: fullName,
     githubBranch: project.githubPreviewBranch,
   });
@@ -75,7 +78,7 @@ export async function POST(
       githubRepoName: repoName,
       githubRepoUrl: repoUrl,
       previewStatus: "STOPPED",
-      previewUrl: previewUrlForSlug(project.slug),
+      previewUrl: previewUrlForProject(project.slug, project.id),
     },
   });
 

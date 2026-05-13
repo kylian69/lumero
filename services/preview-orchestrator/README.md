@@ -1,9 +1,10 @@
 # preview-orchestrator
 
 Self-hosted replacement for Vercel preview environments. Provisions, builds,
-starts and stops one Docker container per client preview, exposes them at
-`<slug>.preview.lumero.fr` via Cloudflare Tunnel, and auto-stops idle previews
-after a configurable number of days.
+starts and stops one Docker container per client preview, exposes them via
+Cloudflare Tunnel using a hostname provided by Lume at provision time
+(e.g. `<slug>-<id6>-preview.lumero.fr`), and auto-stops idle previews after a
+configurable number of days.
 
 ## Architecture
 
@@ -18,7 +19,7 @@ client browser → <slug>.preview.lumero.fr ┘                ↓
 
 | Method | Path | Body | Effect |
 |---|---|---|---|
-| POST | `/api/projects` | `{id, slug, githubRepoFullName, githubBranch}` | Register a preview |
+| POST | `/api/projects` | `{id, slug, hostname, githubRepoFullName, githubBranch}` | Register a preview |
 | GET  | `/api/projects/:id` | — | Status |
 | POST | `/api/projects/:id/start` | — | Start (build first time) |
 | POST | `/api/projects/:id/stop` | — | Stop the container |

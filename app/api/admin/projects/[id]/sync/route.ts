@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
 import {
   getPreview,
-  previewUrlForSlug,
+  previewUrlForProject,
   mapStateToPreviewStatus,
 } from "@/lib/preview-orchestrator";
 
@@ -39,7 +39,7 @@ export async function POST(
 
   // The public URL is deterministic from the slug; we still refresh it in DB
   // in case the slug changed (it shouldn't).
-  const url = previewUrlForSlug(project.slug);
+  const url = previewUrlForProject(project.slug, project.id);
   const status = mapStateToPreviewStatus(preview.state);
 
   // Don't downgrade REVIEW_SENT — keep that explicit admin state.
