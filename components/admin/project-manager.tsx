@@ -125,7 +125,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
               : p
           )
         );
-        setMsg(projectId, "Repo GitHub et projet Vercel créés. En attente du premier déploiement…");
+        setMsg(projectId, "Repo GitHub créé et preview enregistrée. Le client peut maintenant la démarrer depuis son portail.");
         router.refresh();
       } else {
         setMsg(projectId, data.error ?? "Erreur lors du provisionnement");
@@ -150,7 +150,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
               : p
           )
         );
-        setMsg(projectId, "Aperçu synchronisé depuis Vercel.");
+        setMsg(projectId, "Aperçu synchronisé.");
         router.refresh();
       } else {
         setMsg(projectId, data.error ?? data.message ?? "Erreur lors de la synchronisation");
@@ -394,7 +394,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                     ) : (
                       <>
                         <Settings2 className="h-4 w-4" />
-                        Configurer GitHub & Vercel
+                        Configurer la preview
                       </>
                     )}
                   </Button>
@@ -404,7 +404,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                   <>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      En attente du premier déploiement Vercel…
+                      En attente du premier démarrage de la preview…
                     </div>
                     <Button
                       size="sm"

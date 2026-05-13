@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getPreview } from "@/lib/preview-orchestrator";
+import { getPortalStartQuota } from "@/lib/preview-quota";
 
 export async function GET(
   _req: Request,
@@ -17,14 +18,19 @@ export async function GET(
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
   if (!project.githubRepoName) {
-    return NextResponse.json({ state: "NONE", url: null });
+    return NextResponse.json({ state: "NONE", url: null, quota: null });
   }
 
-  const preview = await getPreview(project.id);
+  const [preview, quota] = await Promise.all([
+    getPreview(project.id),
+    getPortalStartQuota(project.id, session.user.id),
+  ]);
+
   return NextResponse.json({
     state: preview?.state ?? "NONE",
     url: project.previewUrl,
     lastBuiltAt: preview?.lastBuiltAt ?? null,
     errorMessage: preview?.errorMessage ?? null,
+    quota,
   });
 }

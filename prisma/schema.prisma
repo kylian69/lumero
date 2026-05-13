@@ -284,10 +284,8 @@ model Project {
   githubDefaultBranch String   @default("main")
   githubPreviewBranch String   @default("preview")
 
-  // Vercel
-  vercelProjectId     String?
-
-  // Delivery — previewStatus values: NONE | PROVISIONING | READY | REVIEW_SENT
+  // Preview lifecycle — previewStatus values, set by the orchestrator:
+  // NONE | STOPPED | STARTING | BUILDING | RUNNING | ERROR | REVIEW_SENT
   previewStatus       String   @default("NONE")
   previewPublishedAt  DateTime?
 
