@@ -18,6 +18,7 @@ api.use((req, res, next) => {
 const provisionBody = z.object({
   id: z.string().min(1),
   slug: z.string().regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, "invalid slug"),
+  hostname: z.string().regex(/^[a-z0-9][a-z0-9.-]*$/, "invalid hostname"),
   githubRepoFullName: z.string().regex(/^[\w.-]+\/[\w.-]+$/),
   githubBranch: z.string().default("preview"),
 });

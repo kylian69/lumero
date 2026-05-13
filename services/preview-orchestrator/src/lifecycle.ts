@@ -104,10 +104,13 @@ export async function destroy(preview: PreviewRow) {
 
 /**
  * Idempotent provisioning: register a new preview (does not start it yet).
+ * The hostname is provided by the caller (Lume) so the orchestrator stays
+ * agnostic of the domain layout.
  */
 export function provision(opts: {
   id: string;
   slug: string;
+  hostname: string;
   githubRepoFullName: string;
   githubBranch: string;
 }): PreviewRow {
@@ -120,7 +123,7 @@ export function provision(opts: {
     slug: opts.slug,
     githubRepoFullName: opts.githubRepoFullName,
     githubBranch: opts.githubBranch,
-    hostname: `${opts.slug}.${config.PREVIEW_BASE_DOMAIN}`,
+    hostname: opts.hostname,
     containerName: null,
     state: "STOPPED",
     port: config.PREVIEW_DEFAULT_PORT,

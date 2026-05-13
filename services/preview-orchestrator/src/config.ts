@@ -14,8 +14,9 @@ const schema = z.object({
   // GitHub PAT used to clone preview repos (must have `repo` scope on the org).
   GITHUB_TOKEN: z.string().min(1),
 
-  // Base hostname for previews. Each preview lives at <slug>.PREVIEW_BASE_DOMAIN.
-  PREVIEW_BASE_DOMAIN: z.string().default("preview.lumero.fr"),
+  // Informational only: parent domain used by Lume to mint hostnames.
+  // Kept for log readability; the orchestrator itself does not build hostnames.
+  PREVIEW_BASE_DOMAIN: z.string().default("lumero.fr"),
 
   // Network on which preview containers are created so this orchestrator can
   // reach them by container name. Must already exist.

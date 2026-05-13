@@ -64,6 +64,7 @@ async function call<T>(
 export async function provisionPreview(input: {
   id: string;
   slug: string;
+  hostname: string;
   githubRepoFullName: string;
   githubBranch: string;
 }): Promise<OrchestratorPreview> {
@@ -113,12 +114,23 @@ export async function destroyPreview(id: string): Promise<void> {
 }
 
 /**
- * Public URL of a preview, deterministic from the slug.
- * The orchestrator routes <slug>.preview.lumero.fr → corresponding container.
+ * Hostname pattern: <slug>-<short-id>-preview.<base>.
+ * - <slug>      = Project.slug (already URL-friendly)
+ * - <short-id>  = first 6 chars of Project.id (cuid), avoids collisions
+ * - "-preview"  = suffix marking the URL as a preview environment
+ * Stays stable for the lifetime of the project (no commit-dependent parts).
  */
-export function previewUrlForSlug(slug: string): string {
-  const base = process.env.PREVIEW_BASE_DOMAIN ?? "preview.lumero.fr";
-  return `https://${slug}.${base}`;
+export function previewHostnameForProject(
+  slug: string,
+  projectId: string,
+  base: string = process.env.PREVIEW_BASE_DOMAIN ?? "lumero.fr"
+): string {
+  const shortId = projectId.slice(0, 6).toLowerCase();
+  return `${slug}-${shortId}-preview.${base}`;
+}
+
+export function previewUrlForProject(slug: string, projectId: string): string {
+  return `https://${previewHostnameForProject(slug, projectId)}`;
 }
 
 /**

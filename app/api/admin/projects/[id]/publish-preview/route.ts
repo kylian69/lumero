@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
 import { sendEmail } from "@/lib/email/client";
 import { previewPublishedTemplate } from "@/lib/email/templates";
-import { startPreview, previewUrlForSlug } from "@/lib/preview-orchestrator";
+import { startPreview, previewUrlForProject } from "@/lib/preview-orchestrator";
 
 export async function POST(
   _req: Request,
@@ -47,7 +47,7 @@ export async function POST(
     );
   }
 
-  const previewUrl = previewUrlForSlug(project.slug);
+  const previewUrl = previewUrlForProject(project.slug, project.id);
 
   const updated = await prisma.project.update({
     where: { id },

@@ -152,7 +152,7 @@ services:
       INTERNAL_API_TOKEN: ${PREVIEW_INTERNAL_API_TOKEN:?missing}
       GITHUB_WEBHOOK_SECRET: ${PREVIEW_GITHUB_WEBHOOK_SECRET:?missing}
       GITHUB_TOKEN: ${GITHUB_TOKEN:?missing}
-      PREVIEW_BASE_DOMAIN: preview.lumero.fr
+      PREVIEW_BASE_DOMAIN: lumero.fr
       PREVIEW_NETWORK: lumero_lume
       IDLE_SHUTDOWN_DAYS: 3
     volumes:

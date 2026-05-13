@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { startPreview, previewUrlForSlug } from "@/lib/preview-orchestrator";
+import { startPreview, previewUrlForProject } from "@/lib/preview-orchestrator";
 
 export async function POST(
   _req: Request,
@@ -28,7 +28,7 @@ export async function POST(
     where: { id },
     data: {
       previewStatus: preview.state,
-      previewUrl: previewUrlForSlug(project.slug),
+      previewUrl: previewUrlForProject(project.slug, project.id),
     },
   });
   return NextResponse.json({ ok: true, project: updated, state: preview.state });
