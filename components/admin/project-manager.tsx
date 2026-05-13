@@ -16,6 +16,10 @@ import {
   Pencil,
   Check,
   X,
+  Play,
+  Moon,
+  RotateCcw,
+  AlertTriangle,
 } from "lucide-react";
 import { formatRelative } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -174,6 +178,40 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
         const data = await res.json();
         setMsg(projectId, data.error ?? "Erreur lors de la suppression");
         setConfirmDeleteId(null);
+      }
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
+  async function previewAction(
+    projectId: string,
+    action: "start" | "stop" | "redeploy"
+  ) {
+    setLoadingId(projectId);
+    try {
+      const res = await fetch(
+        `/api/admin/projects/${projectId}/preview/${action}`,
+        { method: "POST" }
+      );
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === projectId
+              ? { ...p, previewStatus: data.project.previewStatus }
+              : p
+          )
+        );
+        const labels = {
+          start: "Démarrage de la preview lancé.",
+          stop: "Preview mise en veille.",
+          redeploy: "Redéploiement lancé.",
+        } as const;
+        setMsg(projectId, labels[action]);
+        router.refresh();
+      } else {
+        setMsg(projectId, data.error ?? "Erreur");
       }
     } finally {
       setLoadingId(null);
@@ -382,6 +420,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
 
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-2">
+                {/* NONE: no preview yet, only the provisioning button */}
                 {p.previewStatus === "NONE" && (
                   <Button
                     size="sm"
@@ -400,33 +439,11 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                   </Button>
                 )}
 
-                {p.previewStatus === "PROVISIONING" && (
+                {/* All non-NONE states share these helpers */}
+                {p.previewStatus !== "NONE" && (
                   <>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      En attente du premier démarrage de la preview…
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => syncPreview(p.id)}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <RefreshCw className="h-4 w-4" />
-                          Synchroniser
-                        </>
-                      )}
-                    </Button>
-                  </>
-                )}
-
-                {p.previewStatus === "READY" && (
-                  <>
-                    {p.previewUrl && (
+                    {/* "Voir l'aperçu" — only meaningful when actually running */}
+                    {p.previewStatus === "RUNNING" && p.previewUrl && (
                       <Button size="sm" variant="outline" asChild>
                         <a href={p.previewUrl} target="_blank" rel="noreferrer">
                           <ExternalLink className="h-4 w-4" />
@@ -434,52 +451,132 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                         </a>
                       </Button>
                     )}
+
+                    {/* STOPPED → Démarrer */}
+                    {p.previewStatus === "STOPPED" && (
+                      <Button
+                        size="sm"
+                        onClick={() => previewAction(p.id, "start")}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4" /> Démarrer
+                          </>
+                        )}
+                      </Button>
+                    )}
+
+                    {/* RUNNING → Mettre en veille + Redéployer */}
+                    {p.previewStatus === "RUNNING" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => previewAction(p.id, "stop")}
+                          disabled={loading}
+                        >
+                          <Moon className="h-4 w-4" /> Mettre en veille
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => previewAction(p.id, "redeploy")}
+                          disabled={loading}
+                        >
+                          <RotateCcw className="h-4 w-4" /> Redéployer
+                        </Button>
+                      </>
+                    )}
+
+                    {/* STARTING / BUILDING → spinner + Annuler */}
+                    {(p.previewStatus === "STARTING" ||
+                      p.previewStatus === "BUILDING") && (
+                      <>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          {p.previewStatus === "BUILDING"
+                            ? "Construction de l'image…"
+                            : "Démarrage du conteneur…"}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => previewAction(p.id, "stop")}
+                          disabled={loading}
+                        >
+                          <X className="h-4 w-4" /> Annuler
+                        </Button>
+                      </>
+                    )}
+
+                    {/* ERROR → message + Réessayer */}
+                    {p.previewStatus === "ERROR" && (
+                      <>
+                        <div className="flex items-center gap-2 text-xs text-rose-600">
+                          <AlertTriangle className="h-3 w-3" />
+                          Échec du démarrage. Synchroniser pour voir le détail.
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => previewAction(p.id, "start")}
+                          disabled={loading}
+                        >
+                          <RotateCcw className="h-4 w-4" /> Réessayer
+                        </Button>
+                      </>
+                    )}
+
+                    {/* REVIEW_SENT → URL + badge */}
+                    {p.previewStatus === "REVIEW_SENT" && (
+                      <>
+                        {p.previewUrl && (
+                          <Button size="sm" variant="outline" asChild>
+                            <a
+                              href={p.previewUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Voir l'aperçu
+                            </a>
+                          </Button>
+                        )}
+                        <Badge variant="success" className="text-xs">
+                          Envoyé au client
+                        </Badge>
+                      </>
+                    )}
+
+                    {/* Publier au client — disponible dès que la preview est en
+                        ligne, jusqu'à ce qu'elle soit publiée */}
+                    {p.previewStatus === "RUNNING" && (
+                      <Button
+                        size="sm"
+                        onClick={() => publishPreview(p.id)}
+                        disabled={loading}
+                      >
+                        <Send className="h-4 w-4" /> Publier au client
+                      </Button>
+                    )}
+
+                    {/* Synchroniser — toujours présent pour refresh l'état */}
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       onClick={() => syncPreview(p.id)}
                       disabled={loading}
-                    >
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => publishPreview(p.id)}
-                      disabled={loading}
+                      title="Actualiser l'état depuis l'orchestrateur"
                     >
                       {loading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <>
-                          <Send className="h-4 w-4" />
-                          Publier au client
-                        </>
+                        <RefreshCw className="h-4 w-4" />
                       )}
                     </Button>
-                  </>
-                )}
-
-                {p.previewStatus === "REVIEW_SENT" && (
-                  <>
-                    {p.previewUrl && (
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={p.previewUrl} target="_blank" rel="noreferrer">
-                          <ExternalLink className="h-4 w-4" />
-                          Voir l'aperçu
-                        </a>
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => syncPreview(p.id)}
-                      disabled={loading}
-                    >
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    </Button>
-                    <Badge variant="success" className="text-xs">
-                      Envoyé au client
-                    </Badge>
                   </>
                 )}
               </div>
