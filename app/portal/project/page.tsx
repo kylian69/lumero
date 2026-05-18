@@ -112,6 +112,7 @@ export default async function PortalProjectPage({
                               | "ERROR"
                           }
                           initialUrl={p.previewUrl}
+                          projectStatus={p.status}
                         />
                       )}
                       <Button size="sm" asChild>

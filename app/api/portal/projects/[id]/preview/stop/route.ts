@@ -19,6 +19,12 @@ export async function POST(
   if (!project.githubRepoName) {
     return NextResponse.json({ error: "Preview non provisionnée" }, { status: 422 });
   }
+  if (project.status === "BRIEF") {
+    return NextResponse.json(
+      { error: "Votre site n'est pas encore publié par notre équipe." },
+      { status: 403 }
+    );
+  }
 
   const preview = await stopPreview(project.id);
   const updated = await prisma.project.update({

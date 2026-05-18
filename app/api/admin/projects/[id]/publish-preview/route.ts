@@ -53,7 +53,6 @@ export async function POST(
     where: { id },
     data: {
       status: "REVIEW",
-      previewStatus: "REVIEW_SENT",
       previewPublishedAt: new Date(),
       previewUrl,
     },

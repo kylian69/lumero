@@ -42,13 +42,9 @@ export async function POST(
   const url = previewUrlForProject(project.slug, project.id);
   const status = mapStateToPreviewStatus(preview.state);
 
-  // Don't downgrade REVIEW_SENT — keep that explicit admin state.
-  const nextStatus =
-    project.previewStatus === "REVIEW_SENT" ? "REVIEW_SENT" : status;
-
   const updated = await prisma.project.update({
     where: { id },
-    data: { previewUrl: url, previewStatus: nextStatus },
+    data: { previewUrl: url, previewStatus: status },
   });
 
   await logActivity({

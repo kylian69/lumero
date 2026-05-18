@@ -25,6 +25,7 @@ type Props = {
   projectId: string;
   initialState: PreviewState;
   initialUrl: string | null;
+  projectStatus: string;
 };
 
 const labels: Record<
@@ -41,7 +42,8 @@ const labels: Record<
 
 const transitional = (s: PreviewState) => s === "STARTING" || s === "BUILDING";
 
-export function PreviewControl({ projectId, initialState, initialUrl }: Props) {
+export function PreviewControl({ projectId, initialState, initialUrl, projectStatus }: Props) {
+  const isBrief = projectStatus === "BRIEF";
   const [state, setState] = useState<PreviewState>(initialState);
   const [url, setUrl] = useState<string | null>(initialUrl);
   const [busy, setBusy] = useState(false);
@@ -138,6 +140,15 @@ export function PreviewControl({ projectId, initialState, initialUrl }: Props) {
   if (state === "NONE") return null;
   const meta = labels[state];
   const canStart = !quota || quota.remaining > 0;
+
+  if (isBrief) {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Info className="h-3 w-3" />
+        Votre site est en cours de préparation. Vous pourrez le démarrer dès qu'il sera publié par notre équipe.
+      </p>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">
