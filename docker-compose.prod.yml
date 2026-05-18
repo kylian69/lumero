@@ -112,7 +112,11 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: lume-cloudflared
     restart: unless-stopped
-    command: tunnel --no-autoupdate run
+    # Force HTTP/2 instead of QUIC. UDP/QUIC is unreliable on some mobile
+    # carriers and home ISPs, causing random 502s depending on which CF edge
+    # the visitor's device hits. HTTP/2 is rock-solid and the perf diff is
+    # imperceptible for our use case.
+    command: tunnel --no-autoupdate --protocol http2 run
     environment:
       TUNNEL_TOKEN: ${TUNNEL_TOKEN:?missing}
     networks:
