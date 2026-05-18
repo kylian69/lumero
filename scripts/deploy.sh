@@ -17,7 +17,7 @@ echo "[deploy] Pulling image: $IMAGE"
 IMAGE="$IMAGE" docker compose -f docker-compose.prod.yml pull app
 
 echo "[deploy] Recreating app container"
-IMAGE="$IMAGE" docker compose -f docker-compose.prod.yml up -d --no-deps app
+IMAGE="$IMAGE" docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate app
 
 echo "[deploy] Pruning dangling images"
 docker image prune -f >/dev/null
