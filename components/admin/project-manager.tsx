@@ -56,6 +56,8 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
   const [loadingId, setLoadingId] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<Record<string, string>>({});
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
+  const [deleteGithub, setDeleteGithub] = React.useState(false);
+  const [deleteDocker, setDeleteDocker] = React.useState(false);
   const [editingDomainId, setEditingDomainId] = React.useState<string | null>(null);
   const [domainInput, setDomainInput] = React.useState("");
 
@@ -169,10 +171,18 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
     try {
       const res = await fetch(`/api/admin/projects/${projectId}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deleteGithub, deleteDocker }),
       });
       if (res.ok) {
+        const data = await res.json().catch(() => ({}));
         setProjects((prev) => prev.filter((p) => p.id !== projectId));
         setConfirmDeleteId(null);
+        setDeleteGithub(false);
+        setDeleteDocker(false);
+        if (Array.isArray(data?.warnings) && data.warnings.length > 0) {
+          setMsg(projectId, `Supprimé avec avertissements : ${data.warnings.join(" ; ")}`);
+        }
         router.refresh();
       } else {
         const data = await res.json();
@@ -182,6 +192,12 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
     } finally {
       setLoadingId(null);
     }
+  }
+
+  function openDeleteConfirm(projectId: string) {
+    setConfirmDeleteId(projectId);
+    setDeleteGithub(false);
+    setDeleteDocker(false);
   }
 
   async function previewAction(
@@ -229,7 +245,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
         setProjects((prev) =>
           prev.map((p) =>
             p.id === projectId
-              ? { ...p, previewStatus: "REVIEW_SENT", status: "REVIEW" }
+              ? { ...p, status: "REVIEW", previewPublishedAt: new Date() }
               : p
           )
         );
@@ -372,25 +388,46 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                 <div className="flex items-center gap-2">
                   <StatusBadge kind="previewStatus" value={p.previewStatus} />
                   {confirmDeleteId === p.id ? (
-                    <div className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/5 px-2 py-1">
-                      <span className="text-xs text-destructive">Supprimer ?</span>
-                      <button
-                        onClick={() => deleteProject(p.id)}
-                        disabled={loading}
-                        className="rounded px-1.5 py-0.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                      >
-                        {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Oui"}
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeleteId(null)}
-                        className="rounded px-1.5 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted"
-                      >
-                        Non
-                      </button>
+                    <div className="flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2">
+                      <span className="text-xs font-medium text-destructive">
+                        Supprimer ce projet ?
+                      </span>
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          checked={deleteGithub}
+                          onChange={(e) => setDeleteGithub(e.target.checked)}
+                          disabled={!p.githubRepoUrl}
+                        />
+                        Supprimer aussi le repo GitHub
+                      </label>
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          checked={deleteDocker}
+                          onChange={(e) => setDeleteDocker(e.target.checked)}
+                        />
+                        Supprimer aussi le conteneur Docker de preview
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => deleteProject(p.id)}
+                          disabled={loading}
+                          className="rounded px-1.5 py-0.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                        >
+                          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Confirmer"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="rounded px-1.5 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted"
+                        >
+                          Annuler
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <button
-                      onClick={() => setConfirmDeleteId(p.id)}
+                      onClick={() => openDeleteConfirm(p.id)}
                       className="group rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       title="Supprimer ce projet"
                     >
@@ -530,37 +567,23 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                       </>
                     )}
 
-                    {/* REVIEW_SENT → URL + badge */}
-                    {p.previewStatus === "REVIEW_SENT" && (
-                      <>
-                        {p.previewUrl && (
-                          <Button size="sm" variant="outline" asChild>
-                            <a
-                              href={p.previewUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              Voir l'aperçu
-                            </a>
-                          </Button>
-                        )}
-                        <Badge variant="success" className="text-xs">
-                          Envoyé au client
-                        </Badge>
-                      </>
-                    )}
-
-                    {/* Publier au client — disponible dès que la preview est en
-                        ligne, jusqu'à ce qu'elle soit publiée */}
+                    {/* Publier au client — disponible dès que la preview est
+                        en ligne. Reste accessible pour re-publier au besoin. */}
                     {p.previewStatus === "RUNNING" && (
                       <Button
                         size="sm"
                         onClick={() => publishPreview(p.id)}
                         disabled={loading}
                       >
-                        <Send className="h-4 w-4" /> Publier au client
+                        <Send className="h-4 w-4" />
+                        {p.previewPublishedAt ? "Republier au client" : "Publier au client"}
                       </Button>
+                    )}
+
+                    {p.previewPublishedAt && (
+                      <Badge variant="success" className="text-xs">
+                        Envoyé au client
+                      </Badge>
                     )}
 
                     {/* Synchroniser — toujours présent pour refresh l'état */}

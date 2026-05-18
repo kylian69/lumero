@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
+import { destroyPreview } from "@/lib/preview-orchestrator";
+import { deleteGithubRepo } from "@/lib/github";
 
 const schema = z.object({
   name: z.string().min(1).optional(),
@@ -50,7 +52,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSession();
@@ -60,9 +62,46 @@ export async function DELETE(
 
   const { id } = await params;
 
+  let deleteGithub = false;
+  let deleteDocker = false;
+  try {
+    const body = await req.json();
+    deleteGithub = Boolean(body?.deleteGithub);
+    deleteDocker = Boolean(body?.deleteDocker);
+  } catch {
+    /* no body, defaults to false */
+  }
+
   const project = await prisma.project.findUnique({ where: { id } });
   if (!project) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+  }
+
+  const warnings: string[] = [];
+
+  if (deleteDocker && project.githubRepoName) {
+    try {
+      await destroyPreview(project.id);
+    } catch (err) {
+      warnings.push(
+        `Docker preview: ${err instanceof Error ? err.message : "erreur inconnue"}`
+      );
+    }
+  }
+
+  if (deleteGithub && project.githubRepoName) {
+    const org = process.env.GITHUB_ORG;
+    if (!org) {
+      warnings.push("GitHub repo: GITHUB_ORG non configuré");
+    } else {
+      try {
+        await deleteGithubRepo(`${org}/${project.githubRepoName}`);
+      } catch (err) {
+        warnings.push(
+          `GitHub repo: ${err instanceof Error ? err.message : "erreur inconnue"}`
+        );
+      }
+    }
   }
 
   await prisma.project.delete({ where: { id } });
@@ -72,8 +111,8 @@ export async function DELETE(
     entityType: "project",
     entityId: id,
     action: "deleted",
-    metadata: { name: project.name },
+    metadata: { name: project.name, deleteGithub, deleteDocker, warnings },
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, warnings });
 }

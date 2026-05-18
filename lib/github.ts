@@ -61,6 +61,17 @@ export async function createGithubRepo(slug: string): Promise<{
   };
 }
 
+export async function deleteGithubRepo(fullName: string): Promise<void> {
+  const res = await fetch(`${GITHUB_API}/repos/${fullName}`, {
+    method: "DELETE",
+    headers: headers(),
+  });
+  if (!res.ok && res.status !== 404) {
+    const body = await res.text();
+    throw new Error(`GitHub API DELETE /repos/${fullName} → ${res.status}: ${body}`);
+  }
+}
+
 export async function createGithubBranch(
   fullName: string,
   branch: string

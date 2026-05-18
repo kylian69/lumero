@@ -27,6 +27,12 @@ export async function POST(
       { status: 422 }
     );
   }
+  if (project.status === "BRIEF") {
+    return NextResponse.json(
+      { error: "Votre site n'est pas encore publié par notre équipe." },
+      { status: 403 }
+    );
+  }
 
   // Enforce daily start quota for client-initiated starts.
   const used = await countPortalStartsLast24h(project.id, session.user.id);
