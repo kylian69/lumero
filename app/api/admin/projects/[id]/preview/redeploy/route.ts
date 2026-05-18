@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
-import { redeployPreview } from "@/lib/preview-orchestrator";
+import {
+  ensureProvisioned,
+  previewHostnameForProject,
+  redeployPreview,
+} from "@/lib/preview-orchestrator";
 
 export async function POST(
   _req: Request,
@@ -17,6 +21,21 @@ export async function POST(
   if (!project) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
+
+  if (!project.githubRepoName) {
+    return NextResponse.json(
+      { error: "Projet non provisionné. Lancez d'abord le provisioning GitHub." },
+      { status: 409 }
+    );
+  }
+
+  await ensureProvisioned({
+    id: project.id,
+    slug: project.slug,
+    hostname: previewHostnameForProject(project.slug, project.id),
+    githubRepoFullName: `${process.env.GITHUB_ORG}/${project.githubRepoName}`,
+    githubBranch: project.githubPreviewBranch,
+  });
 
   const preview = await redeployPreview(project.id);
   const updated = await prisma.project.update({

@@ -85,6 +85,24 @@ export async function getPreview(id: string): Promise<OrchestratorPreview | null
   }
 }
 
+/**
+ * Make sure the orchestrator knows about this project. If the orchestrator's
+ * state was wiped (e.g. service redeploy with ephemeral SQLite) or the project
+ * was never provisioned there, re-register it from the data we hold in Prisma.
+ * No-op when the project is already registered.
+ */
+export async function ensureProvisioned(input: {
+  id: string;
+  slug: string;
+  hostname: string;
+  githubRepoFullName: string;
+  githubBranch: string;
+}): Promise<OrchestratorPreview> {
+  const existing = await getPreview(input.id);
+  if (existing) return existing;
+  return provisionPreview(input);
+}
+
 export async function startPreview(id: string): Promise<OrchestratorPreview> {
   const data = await call<{ preview: OrchestratorPreview }>(
     `/api/projects/${id}/start`,
