@@ -57,7 +57,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
   const [projects, setProjects] = React.useState(initial);
   const [showForm, setShowForm] = React.useState(false);
   const [newName, setNewName] = React.useState("");
-  const [newPlan, setNewPlan] = React.useState<"START" | "STANDARD" | "PRO">("START");
+  const [newPlan, setNewPlan] = React.useState<"NONE" | "START" | "STANDARD" | "PRO">("NONE");
   const [creating, setCreating] = React.useState(false);
   const [loadingId, setLoadingId] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<Record<string, string>>({});
@@ -296,9 +296,12 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
               </label>
               <select
                 value={newPlan}
-                onChange={(e) => setNewPlan(e.target.value as "START" | "STANDARD" | "PRO")}
+                onChange={(e) =>
+                  setNewPlan(e.target.value as "NONE" | "START" | "STANDARD" | "PRO")
+                }
                 className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
+                <option value="NONE">Aucune (à définir plus tard)</option>
                 <option value="START">Start</option>
                 <option value="STANDARD">Standard</option>
                 <option value="PRO">Pro</option>
@@ -332,9 +335,11 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                   <p className="text-sm font-semibold">{p.name}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <StatusBadge kind="project" value={p.status} />
-                    <span className="rounded-full bg-background px-2 py-0.5 text-xs font-medium text-foreground">
-                      {p.planType}
-                    </span>
+                    {p.planType !== "NONE" && (
+                      <span className="rounded-full bg-background px-2 py-0.5 text-xs font-medium text-foreground">
+                        {p.planType}
+                      </span>
+                    )}
                     {editingDomainId === p.id ? (
                       <span className="inline-flex items-center gap-1">
                         <Globe className="h-3 w-3 text-muted-foreground" />

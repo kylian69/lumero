@@ -9,7 +9,7 @@ import { deleteGithubRepo } from "@/lib/github";
 const schema = z.object({
   name: z.string().min(1).optional(),
   status: z.enum(["BRIEF", "DESIGN", "DEVELOPMENT", "REVIEW", "LIVE", "PAUSED", "ARCHIVED"]).optional(),
-  planType: z.enum(["START", "STANDARD", "PRO"]).optional(),
+  planType: z.enum(["NONE", "START", "STANDARD", "PRO"]).optional(),
   domain: z.string().nullable().optional(),
   previewUrl: z.string().url().nullable().optional(),
   previewStatus: z.enum(["NONE", "PROVISIONING", "READY", "REVIEW_SENT"]).optional(),
