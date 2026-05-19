@@ -692,15 +692,47 @@ function TemplateOrderForm({
     telephone: "",
     details: "",
   });
-  const [status, setStatus] = React.useState<"idle" | "loading" | "success">(
-    "idle"
-  );
+  const [status, setStatus] = React.useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [error, setError] = React.useState<string | null>(null);
   const Icon = template.icon;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
-    setTimeout(() => setStatus("success"), 1200);
+    setError(null);
+
+    const detailsParts = [
+      `Modèle choisi : ${template.name} (${template.metier})`,
+      form.details.trim(),
+    ].filter(Boolean);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyName: form.entreprise,
+          email: form.email,
+          phone: form.telephone || undefined,
+          budget: template.price * 100,
+          timeline: `Livraison sous ${template.delay}`,
+          details: detailsParts.join("\n\n"),
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("request_failed");
+      }
+
+      setStatus("success");
+    } catch {
+      setStatus("error");
+      setError(
+        "Une erreur est survenue lors de l'envoi. Merci de réessayer dans un instant."
+      );
+    }
   };
 
   if (status === "success") {
@@ -851,6 +883,15 @@ function TemplateOrderForm({
             contenus. Vous n&apos;êtes pas obligé·e de tout remplir maintenant.
           </p>
         </div>
+
+        {status === "error" && error ? (
+          <p
+            role="alert"
+            className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-600"
+          >
+            {error}
+          </p>
+        ) : null}
 
         <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
