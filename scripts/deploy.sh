@@ -27,4 +27,24 @@ IMAGE="$IMAGE" docker compose -p "$PROJECT" -f docker-compose.prod.yml up -d --n
 echo "[deploy] Pruning dangling images"
 docker image prune -f >/dev/null
 
+# Invalidate Cloudflare edge cache so visitors see the new build immediately
+# instead of a stale HTML page held at the edge. Skipped silently if the env
+# vars aren't set (e.g. local dry runs).
+if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ZONE_ID:-}" ]; then
+  echo "[deploy] Purging Cloudflare cache (zone: $CLOUDFLARE_ZONE_ID)"
+  if curl -fsS -X POST \
+      "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+      -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+      -H "Content-Type: application/json" \
+      --data '{"purge_everything":true}' \
+      -o /tmp/cf-purge.json; then
+    echo "[deploy] Cloudflare purge OK"
+  else
+    echo "[deploy] WARN: Cloudflare purge failed (deploy still succeeded)" >&2
+    cat /tmp/cf-purge.json >&2 || true
+  fi
+else
+  echo "[deploy] Skipping Cloudflare purge (CLOUDFLARE_API_TOKEN / CLOUDFLARE_ZONE_ID not set)"
+fi
+
 echo "[deploy] Done."
