@@ -20,6 +20,7 @@ import {
   Moon,
   RotateCcw,
   AlertTriangle,
+  Tag,
 } from "lucide-react";
 import { formatRelative } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,38 @@ type Project = {
   subscription: ProjectSubscriptionData | null;
 };
 
+const PREVIEW_STATUS_LABELS: Record<string, string> = {
+  NONE: "Non configuré",
+  PROVISIONING: "En déploiement",
+  STARTING: "Démarrage",
+  BUILDING: "Construction",
+  RUNNING: "En ligne",
+  STOPPED: "En veille",
+  ERROR: "Erreur",
+  REVIEW_SENT: "Envoyé au client",
+  READY: "Prêt",
+};
+
+const PREVIEW_STATUS_DOT: Record<string, string> = {
+  NONE: "bg-muted-foreground/40",
+  PROVISIONING: "bg-amber-500",
+  STARTING: "bg-amber-500 animate-pulse",
+  BUILDING: "bg-amber-500 animate-pulse",
+  RUNNING: "bg-emerald-500",
+  STOPPED: "bg-muted-foreground/60",
+  ERROR: "bg-rose-500",
+  REVIEW_SENT: "bg-emerald-500",
+  READY: "bg-sky-500",
+};
+
+function previewStatusLabel(value: string): string {
+  return PREVIEW_STATUS_LABELS[value] ?? value;
+}
+
+function previewStatusDotClass(value: string): string {
+  return PREVIEW_STATUS_DOT[value] ?? "bg-muted-foreground/40";
+}
+
 type ProjectManagerProps = {
   clientId: string;
   projects: Project[];
@@ -66,6 +99,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
   const [deleteDocker, setDeleteDocker] = React.useState(false);
   const [editingDomainId, setEditingDomainId] = React.useState<string | null>(null);
   const [domainInput, setDomainInput] = React.useState("");
+  const [editingPlanId, setEditingPlanId] = React.useState<string | null>(null);
 
   function setMsg(projectId: string, msg: string) {
     setMessages((prev) => ({ ...prev, [projectId]: msg }));
@@ -93,6 +127,31 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
         setEditingDomainId(null);
       } else {
         setMsg(projectId, data.error ?? "Erreur lors de la mise à jour du domaine");
+      }
+    } catch {
+      setMsg(projectId, "Erreur réseau");
+    }
+  }
+
+  async function savePlan(
+    projectId: string,
+    value: "NONE" | "START" | "STANDARD" | "PRO"
+  ) {
+    setEditingPlanId(null);
+    try {
+      const res = await fetch(`/api/admin/projects/${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planType: value }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setProjects((prev) =>
+          prev.map((p) => (p.id === projectId ? { ...p, planType: value } : p))
+        );
+        router.refresh();
+      } else {
+        setMsg(projectId, data.error ?? "Erreur lors de la mise à jour de la formule");
       }
     } catch {
       setMsg(projectId, "Erreur réseau");
@@ -359,23 +418,54 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
               </div>
 
               {/* Metadata row: plan · domain · aperçu · github */}
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-4 pb-3 text-xs">
-                <div className="inline-flex items-center gap-1.5">
-                  <span className="text-muted-foreground">Formule</span>
-                  {p.planType !== "NONE" ? (
-                    <span className="rounded-full bg-background px-2 py-0.5 font-medium text-foreground">
-                      {p.planType}
-                    </span>
+              <div className="mt-3 grid grid-cols-1 gap-3 px-4 pb-3 sm:grid-cols-3">
+                {/* Formule */}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Formule
+                  </span>
+                  {editingPlanId === p.id ? (
+                    <select
+                      autoFocus
+                      defaultValue={p.planType}
+                      onChange={(e) =>
+                        savePlan(
+                          p.id,
+                          e.target.value as "NONE" | "START" | "STANDARD" | "PRO"
+                        )
+                      }
+                      onBlur={() => setEditingPlanId(null)}
+                      className="h-7 rounded-full border border-input bg-background px-2 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                    >
+                      <option value="NONE">Aucune</option>
+                      <option value="START">Start</option>
+                      <option value="STANDARD">Standard</option>
+                      <option value="PRO">Pro</option>
+                    </select>
                   ) : (
-                    <span className="text-muted-foreground/70">—</span>
+                    <button
+                      onClick={() => setEditingPlanId(p.id)}
+                      className="group inline-flex h-7 w-fit items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                      title="Modifier la formule"
+                    >
+                      <Tag className="h-3 w-3" />
+                      {p.planType === "NONE" ? (
+                        <span className="text-muted-foreground">Aucune</span>
+                      ) : (
+                        p.planType
+                      )}
+                      <Pencil className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-60" />
+                    </button>
                   )}
                 </div>
 
-                <div className="inline-flex items-center gap-1.5">
-                  <span className="text-muted-foreground">Domaine</span>
+                {/* Domaine */}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Domaine
+                  </span>
                   {editingDomainId === p.id ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Globe className="h-3 w-3 text-muted-foreground" />
+                    <div className="inline-flex items-center gap-1">
                       <input
                         type="text"
                         value={domainInput}
@@ -386,63 +476,72 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                         }}
                         placeholder="exemple.fr"
                         autoFocus
-                        className="h-6 w-40 rounded border border-input bg-background px-2 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                        className="h-7 w-40 rounded-full border border-input bg-background px-3 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
                       />
                       <button
                         onClick={() => saveDomain(p.id)}
-                        className="rounded p-0.5 text-primary hover:bg-primary/10"
+                        className="rounded-full p-1 text-primary hover:bg-primary/10"
                         title="Enregistrer"
                       >
                         <Check className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => setEditingDomainId(null)}
-                        className="rounded p-0.5 text-muted-foreground hover:bg-muted"
+                        className="rounded-full p-1 text-muted-foreground hover:bg-muted"
                         title="Annuler"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
-                    </span>
-                  ) : p.domain ? (
-                    <button
-                      onClick={() => startEditDomain(p)}
-                      className="group inline-flex items-center gap-1 rounded px-1 font-medium text-foreground hover:text-primary"
-                      title="Modifier le domaine"
-                    >
-                      <Globe className="h-3 w-3" />
-                      {p.domain}
-                      <Pencil className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-60" />
-                    </button>
+                    </div>
                   ) : (
                     <button
                       onClick={() => startEditDomain(p)}
-                      className="inline-flex items-center gap-1 rounded px-1 text-muted-foreground/70 hover:text-primary"
-                      title="Ajouter un domaine"
+                      className="group inline-flex h-7 w-fit max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                      title={p.domain ? "Modifier le domaine" : "Ajouter un domaine"}
                     >
-                      <Globe className="h-3 w-3" />
-                      Ajouter
+                      <Globe className="h-3 w-3 shrink-0" />
+                      <span className="truncate">
+                        {p.domain ?? (
+                          <span className="text-muted-foreground">Ajouter</span>
+                        )}
+                      </span>
+                      <Pencil className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
                     </button>
                   )}
                 </div>
 
-                <div className="inline-flex items-center gap-1.5">
-                  <span className="text-muted-foreground">Aperçu</span>
-                  <StatusBadge kind="previewStatus" value={p.previewStatus} />
+                {/* Aperçu */}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Aperçu
+                  </span>
+                  <div
+                    className="inline-flex h-7 w-fit items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 text-xs font-medium text-foreground"
+                    title={previewStatusLabel(p.previewStatus)}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${previewStatusDotClass(p.previewStatus)}`}
+                      aria-hidden
+                    />
+                    {previewStatusLabel(p.previewStatus)}
+                  </div>
                 </div>
+              </div>
 
-                {p.githubRepoUrl && (
+              {p.githubRepoUrl && (
+                <div className="px-4 pb-3">
                   <a
                     href={p.githubRepoUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="ml-auto inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <Github className="h-3 w-3" />
                     Repo GitHub
                     <ExternalLink className="h-3 w-3" />
                   </a>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-2 border-t border-border/40 bg-background/40 px-4 py-3">
