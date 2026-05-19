@@ -14,16 +14,27 @@
 - générer les mentions légales et la politique de confidentialité
     - mettre un lien vers les mentions légales et la politique de confidentialité sur toutes les pages (doit déjà être présent en footer ?)
 
+- mise en place du mailing local (smtp ?)
 
-- gérer les cookies, l'application doit être RGPD compliant
-    - 
+- notifications lors de la création de tickets, de support, de personnalisaton, de nouveaux prospects (réponses au questionnaire et/ou modèles)
 
-mise en production du site :
-- quel infra pour héberger l'application ?
- - à savoir que je peux mettre à dispoisition des ressources en local chez moi pour mettre en place, cela l'idéal serait d'héberger l'application chez moi pour éviter tous les frais et assurer une souverainté
+- metttre en place la gestion des abonnements 
 
-- pour les preview clients 
-    - je veux également héberger les preview clients en local pour éviter tous les frais et assurer une souverainté (qui sont actuellement sur vercel)
-    - les preview clients ne devronts pas nécessiter beaucoup de ressource
+- bugs 
+    - sur l'aperçu des modèles le bouton "Voir les tarifs" à supprimer n'a pas d'intérêt
+    - lorsqu'un un utilisateur fait chosiir ce modèle dans les modèles disponibles cela ne fait rien en backend, aucun propsects créer ou autre, donc il faut vérifier ce qui est fait à ce moment et s'il n'y a bien rien, mettre la procédure adéquate en place
 
-comment imagine tu la mise en place de tout ça ? qu'est ce que tu me conseil et propose pour mettre en place cela ? 
+- mettre en place le système de paiement 
+    - à quel moment facturer le client ?
+    - quel système à mettre en place ?
+
+- mettre en place un système de statistiques 
+    - statistiques sur les visiteurs du site
+    - statistiques sur les prospects
+    - statistiques sur les clients
+    - statistiques sur les modèles
+    - statistiques sur les paiements
+    - statistiques sur les abonnements
+    - statistiques sur les tickets
+    - statistiques sur les supports
+    - statistiques sur les personnalisations
