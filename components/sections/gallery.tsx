@@ -666,9 +666,6 @@ function TemplatePreview({
             Choisir ce modèle
             <ArrowRight className="h-4 w-4" />
           </Button>
-          <Button asChild variant="outline" className="min-w-0 flex-1">
-            <a href="#tarifs">Voir les tarifs</a>
-          </Button>
         </div>
       </div>
     </div>
