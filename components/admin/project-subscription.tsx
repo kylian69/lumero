@@ -11,7 +11,7 @@ export type ProjectSubscription = {
   id: string;
   tier: "NONE" | "LIGHT" | "COMPLETE";
   status: "ACTIVE" | "PAST_DUE" | "CANCELED" | "PAUSED";
-  monthlyAmount: number;
+  monthlyAmount: number; // centimes (storage unit)
   currency: string;
   currentPeriodEnd: Date | string;
 };
@@ -21,10 +21,17 @@ type Props = {
   subscription: ProjectSubscription | null;
 };
 
-const TIER_PRICES: Record<string, number> = {
+// Prix de référence en euros, par formule
+const TIER_PRICES_EUR: Record<string, number> = {
   NONE: 0,
-  LIGHT: 1900,
-  COMPLETE: 4900,
+  LIGHT: 19,
+  COMPLETE: 49,
+};
+
+const TIER_LABELS: Record<ProjectSubscription["tier"], string> = {
+  NONE: "Aucun abonnement",
+  LIGHT: "Light",
+  COMPLETE: "Complet",
 };
 
 function toDateInput(d: Date | string): string {
@@ -39,64 +46,89 @@ function defaultPeriodEnd(): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function ProjectSubscription({ projectId, subscription }: Props) {
+// Convertit centimes → euros pour l'affichage du champ (sans arrondi destructif).
+function centsToEuros(cents: number): number {
+  return Math.round(cents) / 100;
+}
+
+function eurosToCents(eur: number): number {
+  return Math.round(eur * 100);
+}
+
+export function ProjectSubscription({
+  projectId,
+  subscription: initialSubscription,
+}: Props) {
   const router = useRouter();
+  // État local de l'abonnement courant : mis à jour immédiatement après save
+  // pour que le badge de statut reflète le changement sans rafraîchir la page.
+  const [subscription, setSubscription] = React.useState<ProjectSubscription | null>(
+    initialSubscription,
+  );
   const [editing, setEditing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   const [tier, setTier] = React.useState<ProjectSubscription["tier"]>(
-    subscription?.tier ?? "LIGHT",
+    initialSubscription?.tier ?? "LIGHT",
   );
   const [status, setStatus] = React.useState<ProjectSubscription["status"]>(
-    subscription?.status ?? "ACTIVE",
+    initialSubscription?.status ?? "ACTIVE",
   );
-  const [monthlyAmount, setMonthlyAmount] = React.useState<number>(
-    subscription?.monthlyAmount ?? TIER_PRICES.LIGHT,
+  const [amountEur, setAmountEur] = React.useState<number>(
+    initialSubscription
+      ? centsToEuros(initialSubscription.monthlyAmount)
+      : TIER_PRICES_EUR.LIGHT,
   );
   const [periodEnd, setPeriodEnd] = React.useState<string>(
-    subscription ? toDateInput(subscription.currentPeriodEnd) : defaultPeriodEnd(),
+    initialSubscription
+      ? toDateInput(initialSubscription.currentPeriodEnd)
+      : defaultPeriodEnd(),
   );
 
+  // Synchronise les valeurs si le parent fournit un nouvel abonnement.
   React.useEffect(() => {
-    if (subscription) {
-      setTier(subscription.tier);
-      setStatus(subscription.status);
-      setMonthlyAmount(subscription.monthlyAmount);
-      setPeriodEnd(toDateInput(subscription.currentPeriodEnd));
+    setSubscription(initialSubscription);
+  }, [initialSubscription]);
+
+  function resetForm(sub: ProjectSubscription | null) {
+    if (sub) {
+      setTier(sub.tier);
+      setStatus(sub.status);
+      setAmountEur(centsToEuros(sub.monthlyAmount));
+      setPeriodEnd(toDateInput(sub.currentPeriodEnd));
+    } else {
+      setTier("LIGHT");
+      setStatus("ACTIVE");
+      setAmountEur(TIER_PRICES_EUR.LIGHT);
+      setPeriodEnd(defaultPeriodEnd());
     }
-  }, [subscription]);
+  }
 
   function openEditor() {
     setError(null);
+    resetForm(subscription);
     setEditing(true);
   }
 
   function cancelEditor() {
     setEditing(false);
     setError(null);
-    if (subscription) {
-      setTier(subscription.tier);
-      setStatus(subscription.status);
-      setMonthlyAmount(subscription.monthlyAmount);
-      setPeriodEnd(toDateInput(subscription.currentPeriodEnd));
-    } else {
-      setTier("LIGHT");
-      setStatus("ACTIVE");
-      setMonthlyAmount(TIER_PRICES.LIGHT);
-      setPeriodEnd(defaultPeriodEnd());
-    }
+    resetForm(subscription);
   }
 
   function onTierChange(value: ProjectSubscription["tier"]) {
     setTier(value);
-    setMonthlyAmount(TIER_PRICES[value] ?? monthlyAmount);
+    if (TIER_PRICES_EUR[value] !== undefined) {
+      setAmountEur(TIER_PRICES_EUR[value]);
+    }
   }
 
   async function save() {
     setBusy(true);
     setError(null);
     try {
+      const monthlyAmount = eurosToCents(amountEur);
       if (subscription) {
         const res = await fetch(`/api/admin/subscriptions/${subscription.id}`, {
           method: "PATCH",
@@ -113,6 +145,7 @@ export function ProjectSubscription({ projectId, subscription }: Props) {
           setError(data.error ?? "Erreur lors de la mise à jour");
           return;
         }
+        setSubscription(data.subscription);
       } else {
         const res = await fetch(`/api/admin/subscriptions`, {
           method: "POST",
@@ -129,6 +162,7 @@ export function ProjectSubscription({ projectId, subscription }: Props) {
           setError(data.error ?? "Erreur lors de la création");
           return;
         }
+        setSubscription(data.subscription);
       }
       setEditing(false);
       router.refresh();
@@ -151,7 +185,9 @@ export function ProjectSubscription({ projectId, subscription }: Props) {
         setError(data.error ?? "Erreur lors de la suppression");
         return;
       }
+      setSubscription(null);
       setEditing(false);
+      resetForm(null);
       router.refresh();
     } finally {
       setBusy(false);
@@ -165,9 +201,7 @@ export function ProjectSubscription({ projectId, subscription }: Props) {
           <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
           {subscription ? (
             <>
-              <span className="font-medium">
-                {subscription.tier === "NONE" ? "Sans formule" : subscription.tier}
-              </span>
+              <span className="font-medium">{TIER_LABELS[subscription.tier]}</span>
               <StatusBadge kind="subscription" value={subscription.status} />
               <span className="text-muted-foreground">
                 {formatEUR(subscription.monthlyAmount)}/mois · jusqu'au{" "}
@@ -214,9 +248,9 @@ export function ProjectSubscription({ projectId, subscription }: Props) {
             }
             className="h-8 rounded-md border border-input bg-background px-2 text-xs"
           >
-            <option value="NONE">Aucune</option>
-            <option value="LIGHT">Light</option>
-            <option value="COMPLETE">Complet</option>
+            <option value="NONE">Aucun abonnement</option>
+            <option value="LIGHT">Light (19 €/mois)</option>
+            <option value="COMPLETE">Complet (49 €/mois)</option>
           </select>
         </label>
         <label className="flex flex-col gap-1">
@@ -235,12 +269,13 @@ export function ProjectSubscription({ projectId, subscription }: Props) {
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-muted-foreground">Montant mensuel (centimes)</span>
+          <span className="text-muted-foreground">Montant mensuel (€)</span>
           <input
             type="number"
             min={0}
-            value={monthlyAmount}
-            onChange={(e) => setMonthlyAmount(Number(e.target.value))}
+            step="0.01"
+            value={amountEur}
+            onChange={(e) => setAmountEur(Number(e.target.value))}
             className="h-8 rounded-md border border-input bg-background px-2 text-xs"
           />
         </label>

@@ -122,9 +122,11 @@ export default async function PortalHome({
                   <p className="text-lg font-semibold">{project.name}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                     <StatusBadge kind="project" value={project.status} />
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
-                      Plan {project.planType}
-                    </span>
+                    {project.planType !== "NONE" && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+                        Plan {project.planType}
+                      </span>
+                    )}
                     {project.domain && (
                       <span className="inline-flex items-center gap-1 text-xs">
                         <Globe className="h-3 w-3" />
@@ -240,9 +242,11 @@ export default async function PortalHome({
                   <p className="text-sm font-medium">{p.name}</p>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <StatusBadge kind="project" value={p.status} />
-                    <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                      {p.planType}
-                    </span>
+                    {p.planType !== "NONE" && (
+                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                        {p.planType}
+                      </span>
+                    )}
                   </div>
                   {p.domain && (
                     <p className="text-xs text-muted-foreground">{p.domain}</p>

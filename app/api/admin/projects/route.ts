@@ -7,7 +7,7 @@ import { logActivity } from "@/lib/accounts";
 const schema = z.object({
   userId: z.string(),
   name: z.string().min(1),
-  planType: z.enum(["START", "STANDARD", "PRO"]).default("START"),
+  planType: z.enum(["NONE", "START", "STANDARD", "PRO"]).default("NONE"),
   slug: z.string().regex(/^[a-z0-9-]+$/).optional(),
 });
 

@@ -79,7 +79,9 @@ export default async function PortalProjectPage({
                     <div className="space-y-2 text-sm">
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge kind="project" value={p.status} />
-                        <Badge variant="neutral">Plan {p.planType}</Badge>
+                        {p.planType !== "NONE" && (
+                          <Badge variant="neutral">Plan {p.planType}</Badge>
+                        )}
                       </div>
                       {p.domain && (
                         <p className="text-muted-foreground">
