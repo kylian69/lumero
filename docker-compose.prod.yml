@@ -95,6 +95,12 @@ services:
     environment:
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:?missing}
       COMPOSE_PROJECT_DIR: /workspace
+      # Must match the project name used when the stack was brought up on the
+      # host (default = host directory name, "lumero"). Without this, compose
+      # inside the agent defaults to "workspace" (its cwd), doesn't see the
+      # running lume-app, and `up --force-recreate app` collides on the fixed
+      # container_name instead of replacing it -> deploys silently no-op.
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-lumero}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker/webhook/hooks.yaml:/etc/webhook/hooks.yaml:ro
