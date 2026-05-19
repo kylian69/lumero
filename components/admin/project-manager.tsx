@@ -21,6 +21,7 @@ import {
   RotateCcw,
   AlertTriangle,
   Tag,
+  ChevronDown,
 } from "lucide-react";
 import { formatRelative } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,6 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
   const [deleteDocker, setDeleteDocker] = React.useState(false);
   const [editingDomainId, setEditingDomainId] = React.useState<string | null>(null);
   const [domainInput, setDomainInput] = React.useState("");
-  const [editingPlanId, setEditingPlanId] = React.useState<string | null>(null);
 
   function setMsg(projectId: string, msg: string) {
     setMessages((prev) => ({ ...prev, [projectId]: msg }));
@@ -137,7 +137,6 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
     projectId: string,
     value: "NONE" | "START" | "STANDARD" | "PRO"
   ) {
-    setEditingPlanId(null);
     try {
       const res = await fetch(`/api/admin/projects/${projectId}`, {
         method: "PATCH",
@@ -424,39 +423,30 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                   <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                     Formule
                   </span>
-                  {editingPlanId === p.id ? (
+                  <div className="relative inline-flex h-7 w-fit items-center gap-1.5 rounded-full border border-border/60 bg-background pl-2.5 pr-6 text-xs font-medium text-foreground transition-colors hover:border-primary/40 focus-within:border-primary/40">
+                    <Tag className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    <span className={p.planType === "NONE" ? "text-muted-foreground" : undefined}>
+                      {p.planType === "NONE" ? "Aucune" : p.planType}
+                    </span>
+                    <ChevronDown className="pointer-events-none absolute right-1.5 h-3 w-3 text-muted-foreground" />
                     <select
-                      autoFocus
-                      defaultValue={p.planType}
+                      value={p.planType}
                       onChange={(e) =>
                         savePlan(
                           p.id,
                           e.target.value as "NONE" | "START" | "STANDARD" | "PRO"
                         )
                       }
-                      onBlur={() => setEditingPlanId(null)}
-                      className="h-7 rounded-full border border-input bg-background px-2 text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                      aria-label="Modifier la formule"
+                      title="Modifier la formule"
+                      className="absolute inset-0 cursor-pointer appearance-none bg-transparent text-transparent opacity-0 [&>option]:text-foreground"
                     >
                       <option value="NONE">Aucune</option>
                       <option value="START">Start</option>
                       <option value="STANDARD">Standard</option>
                       <option value="PRO">Pro</option>
                     </select>
-                  ) : (
-                    <button
-                      onClick={() => setEditingPlanId(p.id)}
-                      className="group inline-flex h-7 w-fit items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                      title="Modifier la formule"
-                    >
-                      <Tag className="h-3 w-3" />
-                      {p.planType === "NONE" ? (
-                        <span className="text-muted-foreground">Aucune</span>
-                      ) : (
-                        p.planType
-                      )}
-                      <Pencil className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-60" />
-                    </button>
-                  )}
+                  </div>
                 </div>
 
                 {/* Domaine */}
