@@ -78,7 +78,18 @@ api.post("/projects/:id/redeploy", async (req, res) => {
 api.delete("/projects/:id", async (req, res) => {
   const preview = storage.byId(req.params.id);
   if (!preview) {
-    res.status(404).json({ error: "Not found" });
+    // Project not in DB (e.g. state was wiped). If the caller provides the
+    // slug we can still clean up the container and image.
+    const slug = typeof req.query.slug === "string" ? req.query.slug : null;
+    if (slug) {
+      const { removeContainerIfExists, removeImageIfExists, containerNameForSlug, imageNameForSlug } = await import("./docker");
+      await removeContainerIfExists(containerNameForSlug(slug));
+      await removeImageIfExists(imageNameForSlug(slug));
+      console.log(`[api] destroy fallback for unknown id=${req.params.id} slug=${slug}`);
+      res.json({ ok: true });
+    } else {
+      res.status(404).json({ error: "Not found" });
+    }
     return;
   }
   await destroy(preview);

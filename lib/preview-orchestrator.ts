@@ -127,8 +127,9 @@ export async function redeployPreview(id: string): Promise<OrchestratorPreview> 
   return data.preview;
 }
 
-export async function destroyPreview(id: string): Promise<void> {
-  await call(`/api/projects/${id}`, { method: "DELETE" });
+export async function destroyPreview(id: string, slug?: string): Promise<void> {
+  const qs = slug ? `?slug=${encodeURIComponent(slug)}` : "";
+  await call(`/api/projects/${id}${qs}`, { method: "DELETE" });
 }
 
 /**

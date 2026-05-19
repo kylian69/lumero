@@ -81,7 +81,7 @@ export async function DELETE(
 
   if (deleteDocker && project.githubRepoName) {
     try {
-      await destroyPreview(project.id);
+      await destroyPreview(project.id, project.slug);
     } catch (err) {
       warnings.push(
         `Docker preview: ${err instanceof Error ? err.message : "erreur inconnue"}`
