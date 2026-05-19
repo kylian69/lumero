@@ -13,11 +13,16 @@ fi
 
 cd "${COMPOSE_PROJECT_DIR:-/workspace}"
 
-echo "[deploy] Pulling image: $IMAGE"
-IMAGE="$IMAGE" docker compose -f docker-compose.prod.yml pull app
+# Must target the same compose project that brought the stack up on the host,
+# otherwise compose can't see the running lume-app and collides on its fixed
+# container_name instead of replacing it.
+PROJECT="${COMPOSE_PROJECT_NAME:-lumero}"
+
+echo "[deploy] Project: $PROJECT  Image: $IMAGE"
+IMAGE="$IMAGE" docker compose -p "$PROJECT" -f docker-compose.prod.yml pull app
 
 echo "[deploy] Recreating app container"
-IMAGE="$IMAGE" docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate app
+IMAGE="$IMAGE" docker compose -p "$PROJECT" -f docker-compose.prod.yml up -d --no-deps --force-recreate app
 
 echo "[deploy] Pruning dangling images"
 docker image prune -f >/dev/null
