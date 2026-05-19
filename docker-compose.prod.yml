@@ -105,6 +105,9 @@ services:
       # at the end of each deploy so visitors aren't served stale HTML.
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
       CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
+      # Optional: if set, deploy.sh posts deploy lifecycle notifications
+      # (start / done / failed) to this Discord webhook.
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker/webhook/hooks.yaml:/etc/webhook/hooks.yaml:ro
