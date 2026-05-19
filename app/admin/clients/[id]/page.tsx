@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { formatDate, formatDateTime, formatEUR } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { ActivityTimeline } from "@/components/admin/activity-timeline";
 import { getClientActivity } from "@/lib/activity";
 import { ClientContactEditor, ClientNotes, ClientActions } from "@/components/admin/client-detail";
@@ -37,9 +37,12 @@ export default async function ClientDetailPage({
           githubRepoUrl: true,
           previewPublishedAt: true,
           updatedAt: true,
+          subscriptions: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
         },
       },
-      subscriptions: { orderBy: { createdAt: "desc" } },
       tickets: {
         orderBy: { updatedAt: "desc" },
         take: 10,
@@ -80,7 +83,13 @@ export default async function ClientDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <ProjectManager clientId={client.id} projects={client.projects} />
+          <ProjectManager
+            clientId={client.id}
+            projects={client.projects.map((p) => ({
+              ...p,
+              subscription: p.subscriptions[0] ?? null,
+            }))}
+          />
 
           <Card>
             <CardHeader>
@@ -197,37 +206,6 @@ export default async function ClientDetailPage({
           />
 
           <ClientActions clientId={client.id} isArchived={!!client.archivedAt} />
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Abonnements</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {client.subscriptions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Pas d'abonnement actif.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {client.subscriptions.map((s) => (
-                    <div
-                      key={s.id}
-                      className="rounded-xl border border-border/50 bg-muted/30 p-3 text-sm"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium">{s.tier}</span>
-                        <StatusBadge kind="subscription" value={s.status} />
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {formatEUR(s.monthlyAmount)} / mois · période jusqu'au{" "}
-                        {formatDate(s.currentPeriodEnd)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

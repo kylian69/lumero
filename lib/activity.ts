@@ -67,7 +67,7 @@ export async function getClientActivity(
         select: { id: true },
       }),
       prisma.subscription.findMany({
-        where: { userId },
+        where: { project: { userId } },
         select: { id: true },
       }),
       prisma.supportTicket.findMany({

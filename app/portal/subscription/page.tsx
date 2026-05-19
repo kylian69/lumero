@@ -41,7 +41,7 @@ export default async function PortalSubscriptionPage() {
   const userId = session!.user.id;
 
   const subscriptions = await prisma.subscription.findMany({
-    where: { userId },
+    where: { project: { userId } },
     orderBy: { createdAt: "desc" },
   });
 

@@ -8,8 +8,7 @@ import { getAdminEmails } from "@/lib/email/recipients";
 import { subscriptionCreatedTemplate } from "@/lib/email/templates";
 
 const schema = z.object({
-  userId: z.string().min(1),
-  projectId: z.string().optional(),
+  projectId: z.string().min(1),
   tier: z.enum(["NONE", "LIGHT", "COMPLETE"]).default("LIGHT"),
   monthlyAmount: z.number().int().nonnegative(),
   currency: z.string().optional(),
@@ -37,18 +36,21 @@ export async function POST(req: Request) {
     );
   }
 
-  const client = await prisma.user.findUnique({
-    where: { id: d.userId },
-    select: { id: true, email: true, name: true },
+  const project = await prisma.project.findUnique({
+    where: { id: d.projectId },
+    select: {
+      id: true,
+      name: true,
+      user: { select: { email: true, name: true } },
+    },
   });
-  if (!client) {
-    return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
+  if (!project) {
+    return NextResponse.json({ error: "Projet introuvable" }, { status: 404 });
   }
 
   const subscription = await prisma.subscription.create({
     data: {
-      userId: d.userId,
-      projectId: d.projectId ?? null,
+      projectId: d.projectId,
       tier: d.tier,
       monthlyAmount: d.monthlyAmount,
       currency: d.currency ?? "EUR",
@@ -61,15 +63,15 @@ export async function POST(req: Request) {
     entityType: "subscription",
     entityId: subscription.id,
     action: "created",
-    metadata: { tier: d.tier, monthlyAmount: d.monthlyAmount },
+    metadata: { tier: d.tier, monthlyAmount: d.monthlyAmount, projectId: d.projectId },
   });
 
   const adminEmails = await getAdminEmails();
   if (adminEmails.length > 0) {
     const tpl = subscriptionCreatedTemplate({
       subscriptionId: subscription.id,
-      clientEmail: client.email,
-      clientName: client.name,
+      clientEmail: project.user.email,
+      clientName: project.user.name,
       tier: d.tier,
       monthlyAmountCents: d.monthlyAmount,
       currentPeriodEnd: periodEnd,
