@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
+import { Dialog } from "@/components/ui/dialog";
 
 type Project = {
   id: string;
@@ -387,53 +388,14 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                 </div>
                 <div className="flex items-center gap-2">
                   <StatusBadge kind="previewStatus" value={p.previewStatus} />
-                  {confirmDeleteId === p.id ? (
-                    <div className="flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2">
-                      <span className="text-xs font-medium text-destructive">
-                        Supprimer ce projet ?
-                      </span>
-                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <input
-                          type="checkbox"
-                          checked={deleteGithub}
-                          onChange={(e) => setDeleteGithub(e.target.checked)}
-                          disabled={!p.githubRepoUrl}
-                        />
-                        Supprimer aussi le repo GitHub
-                      </label>
-                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <input
-                          type="checkbox"
-                          checked={deleteDocker}
-                          onChange={(e) => setDeleteDocker(e.target.checked)}
-                        />
-                        Supprimer aussi le conteneur Docker de preview
-                      </label>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => deleteProject(p.id)}
-                          disabled={loading}
-                          className="rounded px-1.5 py-0.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                        >
-                          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Confirmer"}
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="rounded px-1.5 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted"
-                        >
-                          Annuler
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => openDeleteConfirm(p.id)}
-                      className="group rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      title="Supprimer ce projet"
-                    >
-                      <Trash2 className="h-4 w-4 transition-colors group-hover:text-destructive" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => openDeleteConfirm(p.id)}
+                    className="group rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    title="Supprimer ce projet"
+                    aria-label={`Supprimer le projet ${p.name}`}
+                  >
+                    <Trash2 className="h-4 w-4 transition-colors group-hover:text-destructive" />
+                  </button>
                 </div>
               </div>
 
@@ -610,6 +572,109 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
             </div>
           );
         })}
+
+        {(() => {
+          const projectToDelete = projects.find((p) => p.id === confirmDeleteId) ?? null;
+          const isDeleting = loadingId === confirmDeleteId;
+          return (
+            <Dialog
+              open={!!projectToDelete}
+              onClose={() => {
+                if (!isDeleting) setConfirmDeleteId(null);
+              }}
+              labelledBy="delete-project-title"
+              describedBy="delete-project-desc"
+              className="max-w-lg"
+            >
+              {projectToDelete && (
+                <div className="p-6 sm:p-8">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                      <AlertTriangle className="h-6 w-6" aria-hidden />
+                    </div>
+                    <div className="flex-1">
+                      <h2
+                        id="delete-project-title"
+                        className="text-xl font-semibold text-foreground"
+                      >
+                        Supprimer ce projet ?
+                      </h2>
+                      <p
+                        id="delete-project-desc"
+                        className="mt-2 text-sm text-muted-foreground"
+                      >
+                        Vous êtes sur le point de supprimer définitivement le projet{" "}
+                        <span className="font-medium text-foreground">
+                          « {projectToDelete.name} »
+                        </span>
+                        . Cette action est <span className="font-semibold">irréversible</span>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 space-y-3 rounded-2xl border border-border/60 bg-muted/30 p-4">
+                    <label className="flex items-start gap-3 text-sm text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={deleteGithub}
+                        onChange={(e) => setDeleteGithub(e.target.checked)}
+                        disabled={!projectToDelete.githubRepoUrl || isDeleting}
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-destructive"
+                      />
+                      <span>
+                        <span className="font-medium">Supprimer aussi le repo GitHub</span>
+                        {!projectToDelete.githubRepoUrl && (
+                          <span className="block text-xs text-muted-foreground">
+                            Aucun repo GitHub associé
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-3 text-sm text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={deleteDocker}
+                        onChange={(e) => setDeleteDocker(e.target.checked)}
+                        disabled={isDeleting}
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-destructive"
+                      />
+                      <span className="font-medium">
+                        Supprimer aussi le conteneur Docker de preview
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setConfirmDeleteId(null)}
+                      disabled={isDeleting}
+                    >
+                      Annuler
+                    </Button>
+                    <Button
+                      onClick={() => deleteProject(projectToDelete.id)}
+                      disabled={isDeleting}
+                      className="bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-lg hover:shadow-destructive/25 hover:-translate-y-0.5"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Suppression…
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Supprimer définitivement
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Dialog>
+          );
+        })()}
       </CardContent>
     </Card>
   );
