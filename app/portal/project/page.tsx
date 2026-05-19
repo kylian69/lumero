@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Globe, Palette, Target, Sparkles, Info, Clock } from "lucide-react";
+import { Globe, Palette, Target, Sparkles, Info, Clock, Tag } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
@@ -12,6 +12,30 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 
 export const dynamic = "force-dynamic";
+
+const PREVIEW_STATUS_LABELS: Record<string, string> = {
+  NONE: "Non configuré",
+  PROVISIONING: "En déploiement",
+  STARTING: "Démarrage",
+  BUILDING: "Construction",
+  RUNNING: "En ligne",
+  STOPPED: "En veille",
+  ERROR: "Erreur",
+  REVIEW_SENT: "Envoyé pour validation",
+  READY: "Prêt",
+};
+
+const PREVIEW_STATUS_DOT: Record<string, string> = {
+  NONE: "bg-muted-foreground/40",
+  PROVISIONING: "bg-amber-500",
+  STARTING: "bg-amber-500 animate-pulse",
+  BUILDING: "bg-amber-500 animate-pulse",
+  RUNNING: "bg-emerald-500",
+  STOPPED: "bg-muted-foreground/60",
+  ERROR: "bg-rose-500",
+  REVIEW_SENT: "bg-emerald-500",
+  READY: "bg-sky-500",
+};
 
 export default async function PortalProjectPage({
   searchParams,
@@ -67,66 +91,98 @@ export default async function PortalProjectPage({
           )}
           <div className="space-y-4">
             {projects.map((p) => (
-              <Card key={p.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Globe className="h-4 w-4 text-primary" />
-                    {p.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge kind="project" value={p.status} />
-                        {p.planType !== "NONE" && (
-                          <Badge variant="neutral">Plan {p.planType}</Badge>
-                        )}
-                      </div>
-                      {p.domain && (
-                        <p className="text-muted-foreground">
-                          <span className="font-medium text-foreground">
-                            Domaine :
-                          </span>{" "}
-                          {p.domain}
-                        </p>
-                      )}
-                      <p className="flex items-center gap-1.5 text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5" />
-                        Dernière mise à jour : {formatRelative(p.updatedAt)}
-                      </p>
+              <div
+                key={p.id}
+                className="overflow-hidden rounded-xl border bg-card shadow-sm"
+              >
+                {/* Identity header */}
+                <div className="flex items-start justify-between gap-3 px-5 pt-5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Globe className="h-4 w-4 shrink-0 text-primary" />
+                      <h3 className="truncate text-base font-semibold text-foreground">
+                        {p.name}
+                      </h3>
+                      <StatusBadge kind="project" value={p.status} />
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {p.githubRepoName && (
-                        <PreviewControl
-                          projectId={p.id}
-                          initialState={
-                            (["NONE", "STOPPED", "STARTING", "BUILDING", "RUNNING", "ERROR"].includes(
-                              p.previewStatus
-                            )
-                              ? p.previewStatus
-                              : "NONE") as
-                              | "NONE"
-                              | "STOPPED"
-                              | "STARTING"
-                              | "BUILDING"
-                              | "RUNNING"
-                              | "ERROR"
-                          }
-                          initialUrl={p.previewUrl}
-                          projectStatus={p.status}
-                        />
-                      )}
-                      <Button size="sm" asChild>
-                        <Link href={`/portal/customization?projectId=${p.id}`}>
-                          <Sparkles className="h-4 w-4" /> Demander une
-                          modification
-                        </Link>
-                      </Button>
+                    <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      MàJ {formatRelative(p.updatedAt)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Metadata grid */}
+                <div className="mt-3 grid grid-cols-1 gap-3 px-5 pb-4 sm:grid-cols-3">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Formule
+                    </span>
+                    <div className="inline-flex h-7 w-fit items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 text-xs font-medium text-foreground">
+                      <Tag className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      <span className={p.planType === "NONE" ? "text-muted-foreground" : undefined}>
+                        {p.planType === "NONE" ? "À définir" : p.planType}
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Domaine
+                    </span>
+                    <div className="inline-flex h-7 w-fit max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 text-xs font-medium text-foreground">
+                      <Globe className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      <span className="truncate">
+                        {p.domain ?? (
+                          <span className="text-muted-foreground">Non défini</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Aperçu
+                    </span>
+                    <div className="inline-flex h-7 w-fit items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 text-xs font-medium text-foreground">
+                      <span
+                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${PREVIEW_STATUS_DOT[p.previewStatus] ?? "bg-muted-foreground/40"}`}
+                        aria-hidden
+                      />
+                      {PREVIEW_STATUS_LABELS[p.previewStatus] ?? p.previewStatus}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/40 bg-muted/30 px-5 py-3">
+                  {p.githubRepoName && (
+                    <PreviewControl
+                      projectId={p.id}
+                      initialState={
+                        (["NONE", "STOPPED", "STARTING", "BUILDING", "RUNNING", "ERROR"].includes(
+                          p.previewStatus
+                        )
+                          ? p.previewStatus
+                          : "NONE") as
+                          | "NONE"
+                          | "STOPPED"
+                          | "STARTING"
+                          | "BUILDING"
+                          | "RUNNING"
+                          | "ERROR"
+                      }
+                      initialUrl={p.previewUrl}
+                      projectStatus={p.status}
+                    />
+                  )}
+                  <Button size="sm" asChild>
+                    <Link href={`/portal/customization?projectId=${p.id}`}>
+                      <Sparkles className="h-4 w-4" /> Demander une modification
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         </section>
