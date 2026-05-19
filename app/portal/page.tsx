@@ -233,24 +233,26 @@ export default async function PortalHome({
                 <Link
                   key={p.id}
                   href={`/portal/project?projectId=${p.id}`}
-                  className={`flex flex-col gap-1.5 rounded-xl border p-3 transition-colors hover:bg-muted/60 ${
+                  className={`flex flex-col gap-2 rounded-xl border p-3 transition-colors hover:bg-muted/60 ${
                     p.id === project?.id
                       ? "border-primary/40 bg-primary/5"
                       : "border-border/50 bg-muted/30"
                   }`}
                 >
-                  <p className="text-sm font-medium">{p.name}</p>
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="truncate text-sm font-medium">{p.name}</p>
                     <StatusBadge kind="project" value={p.status} />
-                    {p.planType !== "NONE" && (
-                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                        {p.planType}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background px-2 py-0.5 font-medium text-foreground">
+                      {p.planType === "NONE" ? "À définir" : p.planType}
+                    </span>
+                    {p.domain && (
+                      <span className="inline-flex items-center gap-1 truncate">
+                        · {p.domain}
                       </span>
                     )}
                   </div>
-                  {p.domain && (
-                    <p className="text-xs text-muted-foreground">{p.domain}</p>
-                  )}
                 </Link>
               ))}
             </div>
