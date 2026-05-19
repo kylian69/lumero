@@ -27,6 +27,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
+import {
+  ProjectSubscription,
+  type ProjectSubscription as ProjectSubscriptionData,
+} from "@/components/admin/project-subscription";
 
 type Project = {
   id: string;
@@ -40,6 +44,7 @@ type Project = {
   githubRepoUrl: string | null;
   previewPublishedAt: Date | null;
   updatedAt: Date;
+  subscription: ProjectSubscriptionData | null;
 };
 
 type ProjectManagerProps = {
@@ -105,7 +110,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
       });
       const data = await res.json();
       if (res.ok) {
-        setProjects((prev) => [...prev, data.project]);
+        setProjects((prev) => [...prev, { ...data.project, subscription: null }]);
         setNewName("");
         setShowForm(false);
         router.refresh();
@@ -565,6 +570,11 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
                   </>
                 )}
               </div>
+
+              <ProjectSubscription
+                projectId={p.id}
+                subscription={p.subscription}
+              />
 
               {messages[p.id] && (
                 <p className="text-xs text-muted-foreground">{messages[p.id]}</p>

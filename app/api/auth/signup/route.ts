@@ -38,14 +38,13 @@ export async function POST(req: Request) {
       id: true,
       passwordHash: true,
       emailVerified: true,
-      _count: { select: { projects: true, subscriptions: true } },
+      _count: { select: { projects: true } },
     },
   });
 
   if (existing) {
     const isActive =
       existing._count.projects > 0 ||
-      existing._count.subscriptions > 0 ||
       (existing.passwordHash && existing.emailVerified);
     if (isActive) {
       // Real, active account: refuse to create a duplicate.

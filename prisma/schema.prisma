@@ -40,7 +40,6 @@ model User {
 
   prospects       Prospect[]
   projects        Project[]
-  subscriptions   Subscription[]
   tickets         SupportTicket[]       @relation("TicketAuthor")
   ticketMessages  TicketMessage[]
   customizations  CustomizationRequest[]
@@ -314,10 +313,8 @@ enum SubscriptionStatus {
 
 model Subscription {
   id             String             @id @default(cuid())
-  userId         String
-  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectId      String?
-  project        Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId      String
+  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   tier           SubscriptionTier   @default(LIGHT)
   status         SubscriptionStatus @default(ACTIVE)
@@ -331,7 +328,7 @@ model Subscription {
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
-  @@index([userId])
+  @@index([projectId])
   @@index([status])
 }
 

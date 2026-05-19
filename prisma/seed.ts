@@ -107,12 +107,11 @@ async function main() {
   // ─── Abonnement ───────────────────────────────────────────────────────────
 
   const existingSub = await prisma.subscription.findFirst({
-    where: { userId: client.id, status: "ACTIVE" },
+    where: { projectId: project.id, status: "ACTIVE" },
   });
   if (!existingSub) {
     await prisma.subscription.create({
       data: {
-        userId: client.id,
         projectId: project.id,
         tier: "COMPLETE",
         status: "ACTIVE",

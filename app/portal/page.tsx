@@ -59,14 +59,9 @@ export default async function PortalHome({
 
   const activeSub = project
     ? await prisma.subscription.findFirst({
-        where: { userId, projectId: project.id, status: "ACTIVE" },
-      }) ??
-      await prisma.subscription.findFirst({
-        where: { userId, status: "ACTIVE" },
+        where: { projectId: project.id, status: "ACTIVE" },
       })
-    : await prisma.subscription.findFirst({
-        where: { userId, status: "ACTIVE" },
-      });
+    : null;
 
   const firstName = session!.user.name?.split(" ")[0];
 

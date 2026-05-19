@@ -29,10 +29,17 @@ export default async function ClientsPage({
     },
     orderBy: { createdAt: "desc" },
     include: {
-      projects: { select: { id: true, status: true, name: true } },
-      subscriptions: {
-        where: { status: "ACTIVE" },
-        select: { id: true, tier: true, monthlyAmount: true, status: true },
+      projects: {
+        select: {
+          id: true,
+          status: true,
+          name: true,
+          subscriptions: {
+            where: { status: "ACTIVE" },
+            select: { id: true, tier: true, monthlyAmount: true, status: true },
+            take: 1,
+          },
+        },
       },
     },
   });
@@ -72,7 +79,22 @@ export default async function ClientsPage({
         </div>
       </div>
 
-      <ClientsList clients={clients} showArchived={showArchived} />
+      <ClientsList
+        clients={clients.map((c) => ({
+          id: c.id,
+          email: c.email,
+          name: c.name,
+          phone: c.phone,
+          createdAt: c.createdAt,
+          projects: c.projects.map((p) => ({
+            id: p.id,
+            status: p.status,
+            name: p.name,
+          })),
+          subscriptions: c.projects.flatMap((p) => p.subscriptions),
+        }))}
+        showArchived={showArchived}
+      />
     </div>
   );
 }
