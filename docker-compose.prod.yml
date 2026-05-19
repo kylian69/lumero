@@ -101,6 +101,10 @@ services:
       # running lume-app, and `up --force-recreate app` collides on the fixed
       # container_name instead of replacing it -> deploys silently no-op.
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-lumero}
+      # Optional: if both are set, deploy.sh purges the Cloudflare edge cache
+      # at the end of each deploy so visitors aren't served stale HTML.
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker/webhook/hooks.yaml:/etc/webhook/hooks.yaml:ro
