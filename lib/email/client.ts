@@ -1,13 +1,4 @@
-import { Resend } from "resend";
-
-let resendClient: Resend | null = null;
-
-function getClient(): Resend | null {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return null;
-  if (!resendClient) resendClient = new Resend(key);
-  return resendClient;
-}
+const BREVO_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
 
 type EmailAttachment = {
   filename: string;
@@ -24,6 +15,18 @@ type SendEmailParams = {
   attachments?: EmailAttachment[];
 };
 
+type Sender = { name?: string; email: string };
+
+// Parse "Lumero <noreply@lumero.fr>" or "noreply@lumero.fr" into a Brevo sender.
+function parseSender(value: string): Sender {
+  const match = value.match(/^\s*(.*?)\s*<\s*([^>]+)\s*>\s*$/);
+  if (match) {
+    const name = match[1].trim();
+    return name ? { name, email: match[2].trim() } : { email: match[2].trim() };
+  }
+  return { email: value.trim() };
+}
+
 export async function sendEmail(params: SendEmailParams): Promise<void> {
   const recipients = Array.isArray(params.to) ? params.to : [params.to];
   const filtered = recipients.filter((r) => r && r.includes("@"));
@@ -32,36 +35,50 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
     return;
   }
 
-  const client = getClient();
-  if (!client) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
     console.warn(
-      `[email] RESEND_API_KEY not set, skipping send to=${filtered.join(",")} subject="${params.subject}"`,
+      `[email] BREVO_API_KEY not set, skipping send to=${filtered.join(",")} subject="${params.subject}"`,
     );
     return;
   }
 
-  const from = process.env.EMAIL_FROM || "Lumero <onboarding@resend.dev>";
-  const replyTo = params.replyTo || process.env.EMAIL_REPLY_TO || undefined;
+  const sender = parseSender(process.env.EMAIL_FROM || "Lumero <noreply@lumero.fr>");
+  const replyToEmail = params.replyTo || process.env.EMAIL_REPLY_TO || undefined;
+
+  const body: Record<string, unknown> = {
+    sender,
+    to: filtered.map((email) => ({ email })),
+    subject: params.subject,
+    htmlContent: params.html,
+  };
+  if (params.text) body.textContent = params.text;
+  if (replyToEmail) body.replyTo = { email: replyToEmail };
+  if (params.attachments?.length) {
+    body.attachment = params.attachments.map((a) => ({
+      name: a.filename,
+      content: a.content.toString("base64"),
+    }));
+  }
 
   try {
-    const result = await client.emails.send({
-      from,
-      to: filtered,
-      subject: params.subject,
-      html: params.html,
-      text: params.text,
-      replyTo,
-      attachments: params.attachments?.map((a) => ({
-        filename: a.filename,
-        content: a.content,
-        content_type: a.content_type,
-      })),
+    const res = await fetch(BREVO_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "api-key": apiKey,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify(body),
     });
-    if (result.error) {
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
       console.error("[email] send failed", {
         to: filtered,
         subject: params.subject,
-        error: result.error,
+        status: res.status,
+        detail,
       });
       return;
     }
