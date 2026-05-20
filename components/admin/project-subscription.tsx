@@ -6,6 +6,7 @@ import { CreditCard, Loader2, Pencil, Trash2, Plus, Check, X } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatEUR, formatDate } from "@/lib/format";
+import { monthlyPricesForPlan, type PlanType } from "@/lib/pricing";
 
 export type ProjectSubscription = {
   id: string;
@@ -18,14 +19,8 @@ export type ProjectSubscription = {
 
 type Props = {
   projectId: string;
+  planType: PlanType;
   subscription: ProjectSubscription | null;
-};
-
-// Prix de référence en euros, par formule
-const TIER_PRICES_EUR: Record<string, number> = {
-  NONE: 0,
-  LIGHT: 19,
-  COMPLETE: 49,
 };
 
 const TIER_LABELS: Record<ProjectSubscription["tier"], string> = {
@@ -57,9 +52,20 @@ function eurosToCents(eur: number): number {
 
 export function ProjectSubscription({
   projectId,
+  planType,
   subscription: initialSubscription,
 }: Props) {
   const router = useRouter();
+  // Prix de référence (euros) pour la formule du projet : Light/Complet
+  // n'ont pas le même tarif selon Start/Standard/Pro.
+  const tierPricesEur = React.useMemo(() => {
+    const cents = monthlyPricesForPlan(planType);
+    return {
+      NONE: cents.NONE / 100,
+      LIGHT: cents.LIGHT / 100,
+      COMPLETE: cents.COMPLETE / 100,
+    } as Record<ProjectSubscription["tier"], number>;
+  }, [planType]);
   // État local de l'abonnement courant : mis à jour immédiatement après save
   // pour que le badge de statut reflète le changement sans rafraîchir la page.
   const [subscription, setSubscription] = React.useState<ProjectSubscription | null>(
@@ -78,7 +84,7 @@ export function ProjectSubscription({
   const [amountEur, setAmountEur] = React.useState<number>(
     initialSubscription
       ? centsToEuros(initialSubscription.monthlyAmount)
-      : TIER_PRICES_EUR.LIGHT,
+      : tierPricesEur.LIGHT,
   );
   const [periodEnd, setPeriodEnd] = React.useState<string>(
     initialSubscription
@@ -100,7 +106,7 @@ export function ProjectSubscription({
     } else {
       setTier("LIGHT");
       setStatus("ACTIVE");
-      setAmountEur(TIER_PRICES_EUR.LIGHT);
+      setAmountEur(tierPricesEur.LIGHT);
       setPeriodEnd(defaultPeriodEnd());
     }
   }
@@ -119,8 +125,8 @@ export function ProjectSubscription({
 
   function onTierChange(value: ProjectSubscription["tier"]) {
     setTier(value);
-    if (TIER_PRICES_EUR[value] !== undefined) {
-      setAmountEur(TIER_PRICES_EUR[value]);
+    if (tierPricesEur[value] !== undefined) {
+      setAmountEur(tierPricesEur[value]);
     }
   }
 
@@ -249,8 +255,10 @@ export function ProjectSubscription({
             className="h-8 rounded-md border border-input bg-background px-2 text-xs"
           >
             <option value="NONE">Aucun abonnement</option>
-            <option value="LIGHT">Light (19 €/mois)</option>
-            <option value="COMPLETE">Complet (49 €/mois)</option>
+            <option value="LIGHT">Light ({tierPricesEur.LIGHT} €/mois)</option>
+            <option value="COMPLETE">
+              Complet ({tierPricesEur.COMPLETE} €/mois)
+            </option>
           </select>
         </label>
         <label className="flex flex-col gap-1">
