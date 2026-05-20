@@ -18,7 +18,7 @@ const attachmentInput = z.object({
 const createSchema = z.object({
   subject: z.string().min(3, "Sujet trop court"),
   category: z
-    .enum(["TECHNIQUE", "FACTURATION", "CONTENU", "FONCTIONNALITE", "AUTRE"])
+    .enum(["TECHNIQUE", "FACTURATION", "CONTENU", "FONCTIONNALITE", "PREVIEW_ACCESS", "AUTRE"])
     .default("AUTRE"),
   priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).default("NORMAL"),
   content: z.string().min(10, "Message trop court"),

@@ -30,6 +30,13 @@ const schema = z.object({
 
   // Default port the preview container is expected to listen on.
   PREVIEW_DEFAULT_PORT: z.coerce.number().default(3000),
+
+  // Main Lumero app, reached server-to-server to authorize preview visitors.
+  MAIN_APP_INTERNAL_URL: z.string().default("http://app:3000"),
+
+  // Public URL of the main app, used to redirect unauthorized visitors to the
+  // login / access-request page.
+  MAIN_APP_PUBLIC_URL: z.string().default("https://lumero.fr"),
 });
 
 export const config = schema.parse(process.env);

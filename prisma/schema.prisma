@@ -40,6 +40,8 @@ model User {
 
   prospects       Prospect[]
   projects        Project[]
+  previewAccess        PreviewAccess[] @relation("PreviewAccessUser")
+  previewAccessGranted PreviewAccess[] @relation("PreviewAccessGrantedBy")
   tickets         SupportTicket[]       @relation("TicketAuthor")
   ticketMessages  TicketMessage[]
   customizations  CustomizationRequest[]
@@ -292,10 +294,28 @@ model Project {
   subscriptions   Subscription[]
   customizations  CustomizationRequest[]
   tickets         SupportTicket[]
+  previewAccess   PreviewAccess[]
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  @@index([userId])
+}
+
+// Accès preview accordé à un utilisateur autre que le propriétaire du projet.
+// Le propriétaire (Project.userId) et les ADMIN ont accès implicitement — pas
+// d'entrée ici pour eux.
+model PreviewAccess {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation("PreviewAccessUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedById String?
+  grantedBy   User?    @relation("PreviewAccessGrantedBy", fields: [grantedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@unique([projectId, userId])
   @@index([userId])
 }
 
@@ -428,6 +448,7 @@ enum TicketCategory {
   FACTURATION
   CONTENU
   FONCTIONNALITE
+  PREVIEW_ACCESS
   AUTRE
 }
 

@@ -4,11 +4,26 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@prisma/client";
 import { verifyTotp } from "@/lib/totp";
+import { authCookie } from "@/lib/auth-cookie";
+
+const cookie = authCookie();
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 30 },
   pages: {
     signIn: "/login",
+  },
+  cookies: {
+    sessionToken: {
+      name: cookie.name,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: cookie.secure,
+        domain: cookie.domain,
+      },
+    },
   },
   providers: [
     CredentialsProvider({

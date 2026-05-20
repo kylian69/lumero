@@ -28,6 +28,20 @@ client browser → <slug>.preview.lumero.fr ┘                ↓
 
 All `/api` routes require `x-internal-token: $INTERNAL_API_TOKEN`.
 
+## Access control
+
+Previews are private. Before proxying a request, the orchestrator calls the main
+app's `GET /api/preview/authorize` (server-to-server, same `INTERNAL_API_TOKEN`,
+relaying the visitor's cookie). Only the project owner, admins, or users with an
+explicit grant may view the preview; everyone else is redirected to
+`$MAIN_APP_PUBLIC_URL/preview-access`. Relevant env vars:
+
+- `MAIN_APP_INTERNAL_URL` — internal URL of the app (default `http://app:3000`)
+- `MAIN_APP_PUBLIC_URL` — public URL used for redirects (default `https://lumero.fr`)
+
+This requires the session cookie to be shared across subdomains: set
+`AUTH_COOKIE_DOMAIN=.lumero.fr` on the main app.
+
 ## Preview repos contract
 
 Each client preview GitHub repo **must** contain a `Dockerfile` at its root.

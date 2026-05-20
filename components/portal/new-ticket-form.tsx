@@ -16,6 +16,7 @@ const CATEGORIES = [
   { id: "FACTURATION", label: "Facturation / abonnement" },
   { id: "CONTENU", label: "Contenu / textes / photos" },
   { id: "FONCTIONNALITE", label: "Nouvelle fonctionnalité" },
+  { id: "PREVIEW_ACCESS", label: "Accès preview (autoriser une personne)" },
   { id: "AUTRE", label: "Autre" },
 ];
 
