@@ -14,15 +14,25 @@
 - générer les mentions légales et la politique de confidentialité
     - mettre un lien vers les mentions légales et la politique de confidentialité sur toutes les pages (doit déjà être présent en footer ?)
 
-- mise en place du mailing local (smtp ?)
+- mise en place du mailing local (smtp ou brevo)
 
 - notifications lors de la création de tickets, de support, de personnalisaton, de nouveaux prospects (réponses au questionnaire et/ou modèles)
 
 - metttre en place la gestion des abonnements 
 
+- retravailler l'affichage des sites/projets dans l'espace admin, car actuellement je trouve qu'il y'a trop d'informations affichées et que ce n'est pas trop lisible du coup, est-ce que tu pourrais retravailler cela pour que ça soit plus lisible et plus pratique sans retirer d'informations mais juste en pensant mieux la chose
+
 - bugs 
     - sur l'aperçu des modèles le bouton "Voir les tarifs" à supprimer n'a pas d'intérêt
     - lorsqu'un un utilisateur fait chosiir ce modèle dans les modèles disponibles cela ne fait rien en backend, aucun propsects créer ou autre, donc il faut vérifier ce qui est fait à ce moment et s'il n'y a bien rien, mettre la procédure adéquate en place
+    - change le nom de la section "Equipe" en "Utilisateurs" dans l'espace admin
+    - ajouter la possibilité d'annuler un abonnement à tout moment sans être obligé de créer un ticket (et donc par automatiquement créer le ticket lors de l'annulation de l'abonnement)
+
+- ajouter une section et/ou abonnement et/ou formule pour la mise à jour de site internet qui ont été créé chez lumero
+
+- mettre en place une vérification d'accès pour les preview (qui sont actuellement accessible à tous)
+
+- ajouter une instance de développement pour l'application afin d'effectuer des tests avant la mise en production, avec une branche de développement "develop" et une branche de production "main"
 
 - mettre en place le système de paiement 
     - à quel moment facturer le client ?
@@ -38,3 +48,7 @@
     - statistiques sur les tickets
     - statistiques sur les supports
     - statistiques sur les personnalisations
+
+- monitorer le uptime (en cas de crash du service uptime kuma)
+
+- mise en place de logging propre 
