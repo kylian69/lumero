@@ -468,6 +468,9 @@ export function Gallery() {
 
                     <div className="mt-6 flex items-center justify-between border-t border-border/60 pt-5">
                       <div className="flex items-baseline gap-1">
+                        <span className="text-xs text-muted-foreground">
+                          dès
+                        </span>
                         <span className="text-2xl font-semibold tracking-tight">
                           {tpl.price}€
                         </span>
@@ -608,6 +611,7 @@ function TemplatePreview({
             </span>
           </div>
           <div className="mt-0.5 flex items-baseline gap-2">
+            <span className="text-xs text-muted-foreground">dès</span>
             <span className="text-2xl font-semibold tracking-tight">
               {template.price}€
             </span>
@@ -899,6 +903,7 @@ function TemplateOrderForm({
             </span>
           </div>
           <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-sm text-muted-foreground">dès</span>
             <span className="text-3xl font-semibold tracking-tight">
               {template.price}€
             </span>
