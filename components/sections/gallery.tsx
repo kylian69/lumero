@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChefHat,
@@ -21,6 +22,7 @@ import {
   Loader2,
   CheckCircle2,
   Sparkles,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -686,6 +688,7 @@ function TemplateOrderForm({
   template: Template;
   onClose: () => void;
 }) {
+  const { data: session, status: sessionStatus } = useSession();
   const [form, setForm] = React.useState<OrderFormState>({
     entreprise: "",
     email: "",
@@ -696,7 +699,19 @@ function TemplateOrderForm({
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [error, setError] = React.useState<string | null>(null);
+  const [accountExists, setAccountExists] = React.useState(false);
+  const [requiresLogin, setRequiresLogin] = React.useState(false);
+  const [tempPassword, setTempPassword] = React.useState<string | null>(null);
+  const [passwordCopied, setPasswordCopied] = React.useState(false);
   const Icon = template.icon;
+
+  // Pré-remplit l'email avec celui du compte connecté
+  const sessionEmail = session?.user?.email ?? null;
+  React.useEffect(() => {
+    if (sessionStatus === "authenticated" && sessionEmail) {
+      setForm((f) => (f.email ? f : { ...f, email: sessionEmail }));
+    }
+  }, [sessionStatus, sessionEmail]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -721,11 +736,18 @@ function TemplateOrderForm({
           details: detailsParts.join("\n\n"),
         }),
       });
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         throw new Error("request_failed");
       }
 
+      if (data?.requiresLogin) {
+        setRequiresLogin(true);
+      } else {
+        setAccountExists(!!data?.accountExists);
+        setTempPassword(data?.tempPassword ?? null);
+      }
       setStatus("success");
     } catch {
       setStatus("error");
@@ -734,6 +756,39 @@ function TemplateOrderForm({
       );
     }
   };
+
+  if (status === "success" && requiresLogin) {
+    return (
+      <div className="flex flex-col items-center px-8 py-16 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+          <Lock className="h-8 w-8" aria-hidden />
+        </span>
+        <h3
+          id="template-order-title"
+          className="mt-6 text-2xl font-semibold tracking-tight"
+        >
+          Connexion requise
+        </h3>
+        <p className="mt-3 max-w-md text-sm text-muted-foreground">
+          L&apos;adresse{" "}
+          <span className="font-medium text-foreground">{form.email}</span> est
+          déjà associée à un compte. Connectez-vous pour valider votre modèle.
+        </p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <Button asChild>
+            <a
+              href={`/login?email=${encodeURIComponent(form.email)}&next=${encodeURIComponent("/#modeles")}`}
+            >
+              Se connecter
+            </a>
+          </Button>
+          <Button variant="outline" onClick={onClose}>
+            Fermer
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (status === "success") {
     return (
@@ -751,10 +806,57 @@ function TemplateOrderForm({
           Merci {form.entreprise || "à vous"}. Notre équipe vous contactera
           sous 24h pour valider votre modèle <strong>{template.name}</strong>{" "}
           et finaliser la personnalisation.
+          {!accountExists && tempPassword
+            ? " Votre espace client est prêt — connectez-vous avec les identifiants ci-dessous."
+            : ""}
         </p>
-        <Button onClick={onClose} className="mt-8">
-          Parfait, fermer
-        </Button>
+
+        {!accountExists && tempPassword && (
+          <div className="mt-6 w-full max-w-sm rounded-xl border border-border bg-muted/50 p-4 text-left">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Vos identifiants de connexion
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2 rounded-lg bg-background px-3 py-2 text-sm">
+                <span className="truncate text-muted-foreground">
+                  {form.email}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2 rounded-lg bg-background px-3 py-2 text-sm">
+                <span className="font-mono tracking-wide">{tempPassword}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(tempPassword);
+                    setPasswordCopied(true);
+                    setTimeout(() => setPasswordCopied(false), 2000);
+                  }}
+                  className="shrink-0 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {passwordCopied ? "Copié ✓" : "Copier"}
+                </button>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Vous devrez choisir un nouveau mot de passe à la première
+              connexion.
+            </p>
+          </div>
+        )}
+
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          {!accountExists && tempPassword ? (
+            <Button asChild>
+              <a href="/login">Se connecter</a>
+            </Button>
+          ) : null}
+          <Button
+            variant={!accountExists && tempPassword ? "outline" : "default"}
+            onClick={onClose}
+          >
+            Parfait, fermer
+          </Button>
+        </div>
       </div>
     );
   }
