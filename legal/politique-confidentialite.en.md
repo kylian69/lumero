@@ -71,7 +71,7 @@ Your data is only accessible to authorised personnel at Lumero (the publisher an
 
 | Sub-processor | Role | Data concerned | Location |
 |---|---|---|---|
-| **Resend** (Resend, Inc.) | Sending transactional emails | Recipient email, email content, possible attachments | United States — covered by EU Standard Contractual Clauses |
+| **Brevo** (Sendinblue SAS) | Sending transactional emails | Recipient email, email content, possible attachments | European Union (France) |
 | **GitHub** (GitHub Inc., Microsoft subsidiary) | Hosting code repositories of client websites | Project name, slug, generated site content (no visitor personal data) | United States — Standard Contractual Clauses |
 | **Vercel** (Vercel Inc.) | Deployment and preview of client websites | Project IDs, deployment URLs, technical metadata | United States — Standard Contractual Clauses |
 | **Lumero platform host** | Hosting the database and uploaded files | All platform data | European Union — *[TO BE COMPLETED once the host is selected]* |
@@ -80,7 +80,7 @@ None of these sub-processors are authorised to use your data for their own purpo
 
 ## 5. Transfers outside the EU
 
-The main hosting of the Lumero platform takes place within the European Union. Some technical sub-processors (Resend, GitHub, Vercel) may process data in the United States. These transfers are governed by the Standard Contractual Clauses adopted by the European Commission and, where applicable, by these providers' adherence to the EU-US Data Privacy Framework.
+The main hosting of the Lumero platform takes place within the European Union. Some technical sub-processors (GitHub, Vercel) may process data in the United States. These transfers are governed by the Standard Contractual Clauses adopted by the European Commission and, where applicable, by these providers' adherence to the EU-US Data Privacy Framework.
 
 ## 6. Retention periods
 

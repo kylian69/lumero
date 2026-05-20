@@ -71,7 +71,7 @@ Vos données ne sont accessibles qu'aux personnes habilitées chez Lumero (l'éd
 
 | Sous-traitant | Rôle | Données concernées | Localisation |
 |---|---|---|---|
-| **Resend** (Resend, Inc.) | Envoi d'emails transactionnels | Email destinataire, contenu de l'email, pièces jointes éventuelles | États-Unis — transfert encadré par les Clauses contractuelles types de la Commission européenne |
+| **Brevo** (Sendinblue SAS) | Envoi d'emails transactionnels | Email destinataire, contenu de l'email, pièces jointes éventuelles | Union européenne (France) |
 | **GitHub** (GitHub Inc., filiale Microsoft) | Hébergement des dépôts de code des sites clients | Nom du projet, slug, contenu généré du site (sans données personnelles des visiteurs) | États-Unis — Clauses contractuelles types |
 | **Vercel** (Vercel Inc.) | Déploiement et prévisualisation des sites clients | Identifiants de projet, URL de déploiement, métadonnées techniques | États-Unis — Clauses contractuelles types |
 | **Hébergeur de la plateforme Lumero** | Hébergement de la base de données et des fichiers téléversés | Ensemble des données de la plateforme | Union européenne — *[À COMPLÉTER une fois l'hébergeur sélectionné]* |
@@ -80,7 +80,7 @@ Aucun de ces sous-traitants n'est autorisé à utiliser vos données pour des fi
 
 ## 5. Transferts hors UE
 
-L'hébergement principal de la plateforme Lumero est réalisé au sein de l'Union européenne. Certains sous-traitants techniques (Resend, GitHub, Vercel) sont susceptibles de traiter des données aux États-Unis. Ces transferts sont encadrés par les Clauses contractuelles types adoptées par la Commission européenne et, le cas échéant, par l'adhésion de ces prestataires au cadre Data Privacy Framework UE-US.
+L'hébergement principal de la plateforme Lumero est réalisé au sein de l'Union européenne. Certains sous-traitants techniques (GitHub, Vercel) sont susceptibles de traiter des données aux États-Unis. Ces transferts sont encadrés par les Clauses contractuelles types adoptées par la Commission européenne et, le cas échéant, par l'adhésion de ces prestataires au cadre Data Privacy Framework UE-US.
 
 ## 6. Durées de conservation
 
