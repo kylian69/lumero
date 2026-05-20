@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
+import { sendEmail } from "@/lib/email/client";
+import { customizationMessageToClientTemplate } from "@/lib/email/templates";
 
 const attachmentInput = z.object({
   filename: z.string().min(1),
@@ -61,5 +63,25 @@ export async function POST(
     entityId: id,
     action: parsed.data.isInternal ? "internal_note" : "replied",
   });
+
+  if (!parsed.data.isInternal) {
+    const request = await prisma.customizationRequest.findUnique({
+      where: { id },
+      select: {
+        title: true,
+        user: { select: { email: true } },
+      },
+    });
+    if (request?.user?.email) {
+      const tpl = customizationMessageToClientTemplate({
+        requestId: id,
+        title: request.title,
+        content: parsed.data.content,
+        authorName: session.user.name,
+      });
+      await sendEmail({ to: request.user.email, ...tpl });
+    }
+  }
+
   return NextResponse.json({ ok: true, message });
 }

@@ -174,6 +174,48 @@ export function customizationCreatedTemplate(args: {
   return { subject, html, text };
 }
 
+export function customizationMessageToAdminsTemplate(args: {
+  requestId: string;
+  title: string;
+  content: string;
+  clientEmail: string;
+  clientName?: string | null;
+}): Template {
+  const url = `${appUrl()}/admin/customizations/${args.requestId}`;
+  const subject = `Nouvelle réponse client — ${args.title}`;
+  const html = layout(
+    subject,
+    `<p><strong>${escape(args.clientName || args.clientEmail)}</strong> (${escape(args.clientEmail)}) a répondu à une demande de personnalisation.</p>
+     <p><strong>Demande :</strong> ${escape(args.title)}</p>
+     <p><strong>Message :</strong></p>
+     <p style="white-space:pre-wrap;background:#f6f6f6;padding:12px;border-radius:6px;">${escape(args.content)}</p>`,
+    url,
+    "Voir la demande",
+  );
+  const text = `Nouvelle réponse de ${args.clientName || args.clientEmail} sur la personnalisation "${args.title}"\n${url}`;
+  return { subject, html, text };
+}
+
+export function customizationMessageToClientTemplate(args: {
+  requestId: string;
+  title: string;
+  content: string;
+  authorName?: string | null;
+}): Template {
+  const url = `${appUrl()}/portal/customization/${args.requestId}`;
+  const subject = `Réponse à votre demande de personnalisation — ${args.title}`;
+  const html = layout(
+    subject,
+    `<p>L'équipe Lumero vient de répondre à votre demande de personnalisation <strong>${escape(args.title)}</strong>.</p>
+     <p><strong>Message :</strong></p>
+     <p style="white-space:pre-wrap;background:#f6f6f6;padding:12px;border-radius:6px;">${escape(args.content)}</p>`,
+    url,
+    "Voir la demande",
+  );
+  const text = `Réponse de l'équipe Lumero sur votre demande de personnalisation "${args.title}"\n${url}`;
+  return { subject, html, text };
+}
+
 // ───────────────────────── Ticket → admins ─────────────────────────
 
 export function ticketMessageToAdminsTemplate(args: {
