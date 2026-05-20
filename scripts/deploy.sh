@@ -46,6 +46,18 @@ cd "${COMPOSE_PROJECT_DIR:-/workspace}"
 # container_name instead of replacing it.
 PROJECT="${COMPOSE_PROJECT_NAME:-lumero}"
 
+# Bring the working copy up to date so the locally-built services (e.g. the
+# preview-orchestrator) and the mounted config (compose file, this script) match
+# the deployed app image. Best-effort, fast-forward only: never rewrites local
+# state, and is a clean no-op if git is unavailable in the agent image.
+if command -v git >/dev/null 2>&1 && [ -d .git ]; then
+  echo "[deploy] Updating working copy (git pull --ff-only)"
+  git pull --ff-only origin main || \
+    echo "[deploy] WARN: git pull failed; building from existing working copy" >&2
+else
+  echo "[deploy] git unavailable; building preview-orchestrator from the working copy as-is" >&2
+fi
+
 notify_discord "🚀 Déploiement en cours" \
   "Commit \`${SHORT_SHA}\` — pull de l'image + redémarrage de \`lume-app\`." \
   3447003
@@ -55,6 +67,17 @@ IMAGE="$IMAGE" docker compose -p "$PROJECT" -f docker-compose.prod.yml pull app
 
 echo "[deploy] Recreating app container"
 IMAGE="$IMAGE" docker compose -p "$PROJECT" -f docker-compose.prod.yml up -d --no-deps --force-recreate app
+
+# Rebuild + recreate the preview-orchestrator from the local working copy. It is
+# built on the VM (image lume-preview-orchestrator:local), not pulled from a
+# registry, so the deploy webhook must rebuild it for code changes (e.g. the
+# preview access gate) to take effect. The Docker layer cache makes this a near
+# no-op when its sources are unchanged.
+echo "[deploy] Rebuilding preview-orchestrator"
+docker compose -p "$PROJECT" -f docker-compose.prod.yml build preview-orchestrator
+
+echo "[deploy] Recreating preview-orchestrator container"
+docker compose -p "$PROJECT" -f docker-compose.prod.yml up -d --no-deps --force-recreate preview-orchestrator
 
 echo "[deploy] Pruning dangling images"
 docker image prune -f >/dev/null
