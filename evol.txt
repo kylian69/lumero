@@ -34,6 +34,8 @@
 
 - ajouter une instance de développement pour l'application afin d'effectuer des tests avant la mise en production, avec une branche de développement "develop" et une branche de production "main"
 
+- mise en place versionning à chaque déploiement
+
 - mettre en place le système de paiement 
     - à quel moment facturer le client ?
     - quel système à mettre en place ?
