@@ -81,8 +81,11 @@ docker compose -p "$PROJECT" -f docker-compose.prod.yml build preview-orchestrat
 echo "[deploy] Recreating preview-orchestrator container"
 docker compose -p "$PROJECT" -f docker-compose.prod.yml up -d --no-deps --force-recreate preview-orchestrator
 
-echo "[deploy] Pruning dangling images"
+echo "[deploy] Reclaiming disk (dangling images + BuildKit cache)"
 docker image prune -f >/dev/null
+# The preview-orchestrator is rebuilt on every deploy and its BuildKit cache
+# accumulates fast (native better-sqlite3 toolchain), filling the disk. Cap it.
+docker builder prune -f >/dev/null
 
 # Invalidate Cloudflare edge cache so visitors see the new build immediately
 # instead of a stale HTML page held at the edge. Skipped silently if the env
