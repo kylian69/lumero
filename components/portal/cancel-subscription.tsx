@@ -66,7 +66,7 @@ export function CancelSubscription({ subscriptionId }: { subscriptionId: string 
             onChange={(e) => setReason(e.target.value)}
             disabled={busy}
           />
-          {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
           <div className="mt-6 flex justify-end gap-2">
             <Button
               variant="ghost"
@@ -76,7 +76,7 @@ export function CancelSubscription({ subscriptionId }: { subscriptionId: string 
               Revenir
             </Button>
             <Button
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 text-white shadow-sm hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/25"
               onClick={confirm}
               disabled={busy}
             >
