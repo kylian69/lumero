@@ -8,6 +8,7 @@ RUN apk add --no-cache \
       ca-certificates \
       bash \
       curl \
+      git \
       tini \
       docker-cli \
       docker-cli-compose \

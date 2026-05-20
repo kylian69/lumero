@@ -52,6 +52,8 @@ PROJECT="${COMPOSE_PROJECT_NAME:-lumero}"
 # state, and is a clean no-op if git is unavailable in the agent image.
 if command -v git >/dev/null 2>&1 && [ -d .git ]; then
   echo "[deploy] Updating working copy (git pull --ff-only)"
+  # The agent runs as root on a host-owned mount; declare it safe for git.
+  git config --global --add safe.directory "$(pwd)" 2>/dev/null || true
   git pull --ff-only origin main || \
     echo "[deploy] WARN: git pull failed; building from existing working copy" >&2
 else
