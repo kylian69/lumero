@@ -44,7 +44,7 @@ export default async function TeamPage() {
   return (
     <div>
       <PageHeader
-        title="Équipe & utilisateurs"
+        title="Utilisateurs"
         description="Créez, modifiez, invitez ou supprimez les comptes (administrateurs et clients)."
       />
       <UsersManager initialUsers={managed} currentUserId={session.id} />

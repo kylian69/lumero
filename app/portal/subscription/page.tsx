@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { CancelSubscription } from "@/components/portal/cancel-subscription";
 import { formatEUR, formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -77,12 +78,15 @@ export default async function PortalSubscriptionPage() {
                   Prochain prélèvement le {formatDate(active.currentPeriodEnd)}
                 </p>
               </div>
-              <Button variant="outline" asChild>
-                <Link href="/portal/support/new?topic=FACTURATION">
-                  <MessageCircle className="h-4 w-4" />
-                  Modifier / annuler
-                </Link>
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button variant="outline" asChild>
+                  <Link href="/portal/support/new?topic=FACTURATION">
+                    <MessageCircle className="h-4 w-4" />
+                    Modifier
+                  </Link>
+                </Button>
+                <CancelSubscription subscriptionId={active.id} />
+              </div>
             </div>
           </CardContent>
         </Card>
