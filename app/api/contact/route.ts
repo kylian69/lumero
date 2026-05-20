@@ -8,6 +8,7 @@ import {
   prospectCreatedTemplate,
   quoteRequestedTemplate,
 } from "@/lib/email/templates";
+import { getSession } from "@/lib/session";
 
 const schema = z.object({
   companyName: z.string().min(1),
@@ -31,35 +32,69 @@ export async function POST(req: Request) {
       );
     }
     const d = parsed.data;
+    const email = d.email.toLowerCase().trim();
+    const session = await getSession();
 
-    const account = await ensureClientUser({
-      email: d.email,
-      name: d.companyName,
-      phone: d.phone || undefined,
-    });
+    let userId: string;
+    let tempPassword: string | null = null;
+
+    if (session?.user) {
+      // Utilisateur connecté : on rattache la demande à son compte
+      userId = session.user.id;
+    } else {
+      // Non connecté : si un compte existe déjà, on exige la connexion
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      if (existingUser) {
+        return NextResponse.json({ requiresLogin: true });
+      }
+
+      // Aucun compte : on en crée un et on renvoie le mot de passe temporaire
+      // (affiché à l'écran uniquement, jamais envoyé par email)
+      const account = await ensureClientUser({
+        email,
+        name: d.companyName,
+        phone: d.phone || undefined,
+      });
+      userId = account.user.id;
+      tempPassword = account.tempPassword;
+
+      await logActivity({
+        userId: account.user.id,
+        entityType: "user",
+        entityId: account.user.id,
+        action: "account_created",
+        metadata: { source: "template_order" },
+      });
+    }
 
     let prospect = await prisma.prospect.findFirst({
       where: {
-        OR: [
-          { userId: account.user.id },
-          { email: d.email.toLowerCase() },
-        ],
+        OR: [{ userId }, { email }],
       },
     });
     let isNewProspect = false;
     if (!prospect) {
       prospect = await prisma.prospect.create({
         data: {
-          userId: account.user.id,
+          userId,
           companyName: d.companyName,
           contactName: d.contactName || null,
-          email: d.email.toLowerCase(),
+          email,
           phone: d.phone || null,
           status: "NEW",
           source: "QUOTE_FORM",
+          estimatedValue: d.budget ?? null,
         },
       });
       isNewProspect = true;
+    } else if (d.budget != null && prospect.estimatedValue == null) {
+      prospect = await prisma.prospect.update({
+        where: { id: prospect.id },
+        data: { estimatedValue: d.budget },
+      });
     }
 
     const quote = await prisma.quoteRequest.create({
@@ -74,7 +109,7 @@ export async function POST(req: Request) {
     });
 
     await logActivity({
-      userId: account.user.id,
+      userId,
       entityType: "prospect",
       entityId: prospect.id,
       action: "quote_requested",
@@ -109,8 +144,8 @@ export async function POST(req: Request) {
       ok: true,
       prospectId: prospect.id,
       quoteId: quote.id,
-      newAccount: !!account.tempPassword,
-      tempPassword: account.tempPassword,
+      accountExists: !tempPassword,
+      tempPassword,
     });
   } catch (err) {
     console.error("[/api/contact]", err);
