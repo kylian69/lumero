@@ -680,6 +680,7 @@ export function ProjectManager({ clientId, projects: initial }: ProjectManagerPr
               <div className="border-t border-border/40 px-4 py-3">
                 <ProjectSubscription
                   projectId={p.id}
+                  planType={p.planType as "NONE" | "START" | "STANDARD" | "PRO"}
                   subscription={p.subscription}
                 />
               </div>

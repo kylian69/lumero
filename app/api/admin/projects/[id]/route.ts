@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
 import { destroyPreview } from "@/lib/preview-orchestrator";
 import { deleteGithubRepo } from "@/lib/github";
+import { monthlyAmountCents } from "@/lib/pricing";
 
 const schema = z.object({
   name: z.string().min(1).optional(),
@@ -40,15 +41,43 @@ export async function PATCH(
     data: parsed.data,
   });
 
+  // Quand la formule change, on réaligne le prix des abonnements en cours sur
+  // la nouvelle formule (les paliers Light/Complet n'ont pas le même tarif
+  // selon Start/Standard/Pro).
+  const repricedSubscriptions: { id: string; monthlyAmount: number }[] = [];
+  if (
+    parsed.data.planType !== undefined &&
+    parsed.data.planType !== project.planType
+  ) {
+    const subs = await prisma.subscription.findMany({
+      where: { projectId: id, status: { not: "CANCELED" } },
+    });
+    for (const sub of subs) {
+      const newAmount = monthlyAmountCents(parsed.data.planType, sub.tier);
+      if (newAmount !== sub.monthlyAmount) {
+        await prisma.subscription.update({
+          where: { id: sub.id },
+          data: { monthlyAmount: newAmount },
+        });
+        repricedSubscriptions.push({ id: sub.id, monthlyAmount: newAmount });
+      }
+    }
+  }
+
   await logActivity({
     userId: session.user.id,
     entityType: "project",
     entityId: id,
     action: "updated",
-    metadata: parsed.data as Record<string, unknown>,
+    metadata: {
+      ...(parsed.data as Record<string, unknown>),
+      ...(repricedSubscriptions.length
+        ? { repricedSubscriptions }
+        : {}),
+    },
   });
 
-  return NextResponse.json({ ok: true, project: updated });
+  return NextResponse.json({ ok: true, project: updated, repricedSubscriptions });
 }
 
 export async function DELETE(

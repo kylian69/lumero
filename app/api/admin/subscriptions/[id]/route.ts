@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { logActivity } from "@/lib/accounts";
+import { monthlyAmountCents } from "@/lib/pricing";
 
 const patchSchema = z.object({
   tier: z.enum(["NONE", "LIGHT", "COMPLETE"]).optional(),
@@ -30,13 +31,20 @@ export async function PATCH(
   }
   const d = parsed.data;
 
-  const existing = await prisma.subscription.findUnique({ where: { id } });
+  const existing = await prisma.subscription.findUnique({
+    where: { id },
+    include: { project: { select: { planType: true } } },
+  });
   if (!existing) {
     return NextResponse.json({ error: "Abonnement introuvable" }, { status: 404 });
   }
 
   const data: Record<string, unknown> = {};
   if (d.tier !== undefined) data.tier = d.tier;
+  // Si le palier change sans montant explicite, on l'aligne sur la formule du projet.
+  if (d.tier !== undefined && d.monthlyAmount === undefined) {
+    data.monthlyAmount = monthlyAmountCents(existing.project.planType, d.tier);
+  }
   if (d.status !== undefined) {
     data.status = d.status;
     if (d.status === "CANCELED" && !existing.canceledAt) {
