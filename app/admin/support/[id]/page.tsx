@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TicketThread } from "@/components/shared/ticket-thread";
+import { AdminPreviewAccess } from "@/components/preview/admin-preview-access";
 import { formatTicketNumber } from "@/lib/ticket-number";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export default async function AdminTicketPage({
       author: {
         select: { id: true, name: true, email: true, role: true, phone: true },
       },
+      project: { select: { id: true, name: true } },
       messages: {
         orderBy: { createdAt: "asc" },
         include: {
@@ -115,6 +117,19 @@ export default async function AdminTicketPage({
               </Link>
             </CardContent>
           </Card>
+
+          {ticket.project && (
+            <div className="mt-6">
+              <AdminPreviewAccess
+                projectId={ticket.project.id}
+                defaultEmail={
+                  ticket.category === "PREVIEW_ACCESS"
+                    ? ticket.author.email
+                    : undefined
+                }
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

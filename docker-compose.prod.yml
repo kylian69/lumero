@@ -172,6 +172,9 @@ services:
       PREVIEW_BASE_DOMAIN: lumero.fr
       PREVIEW_NETWORK: lumero_lume
       IDLE_SHUTDOWN_DAYS: 3
+      # Used to authorize preview visitors against the main app.
+      MAIN_APP_INTERNAL_URL: http://app:3000
+      MAIN_APP_PUBLIC_URL: https://lumero.fr
     volumes:
       - preview-orchestrator-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
