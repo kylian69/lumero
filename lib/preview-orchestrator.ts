@@ -145,7 +145,13 @@ export function previewHostnameForProject(
   base: string = process.env.PREVIEW_BASE_DOMAIN ?? "lumero.fr"
 ): string {
   const shortId = projectId.slice(0, 6).toLowerCase();
-  return `${slug}-${shortId}-preview.${base}`;
+  // Separator between the "-preview" marker and the base domain. Defaults to a
+  // dot ("...-preview.lumero.fr" in prod). On staging it is set to "-" so
+  // hostnames stay one level under lumero.fr ("...-preview-dev.lumero.fr"),
+  // which Cloudflare's *.lumero.fr wildcard cert covers — a two-level
+  // "*.dev.lumero.fr" wildcard is not covered by Universal SSL.
+  const sep = process.env.PREVIEW_HOSTNAME_SEP ?? ".";
+  return `${slug}-${shortId}-preview${sep}${base}`;
 }
 
 export function previewUrlForProject(slug: string, projectId: string): string {

@@ -93,9 +93,16 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: lume-cloudflared-staging
     restart: unless-stopped
-    command: tunnel --no-autoupdate --protocol http2 run
-    environment:
-      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?missing}
+    # Locally-managed tunnel (config file) instead of a dashboard/token tunnel,
+    # so the ingress can include a catch-all rule for the dynamic preview
+    # hostnames (see docker/cloudflared/config.staging.yml).
+    command: tunnel --no-autoupdate --protocol http2 --config /etc/cloudflared/config.yml run ${TUNNEL_ID:?missing}
+    volumes:
+      - ./docker/cloudflared/config.staging.yml:/etc/cloudflared/config.yml:ro
+      # Tunnel credentials JSON on the host (NOT the dashboard token). Get it via
+      # `cloudflared tunnel create`/`login` or the dashboard, then point this at
+      # the file. Defaults to ./cloudflared-credentials.json in the staging dir.
+      - ${CLOUDFLARED_CREDENTIALS_FILE:-./cloudflared-credentials.json}:/etc/cloudflared/credentials.json:ro
     networks:
       - lume-staging
     depends_on:
@@ -126,6 +133,12 @@ services:
       IDLE_SHUTDOWN_DAYS: 3
       MAIN_APP_INTERNAL_URL: http://app:3000
       MAIN_APP_PUBLIC_URL: ${NEXT_PUBLIC_APP_URL:-https://dev.lumero.fr}
+      # Per-preview DNS automation (staging only): the orchestrator creates a
+      # proxied CNAME per preview pointing at the staging tunnel, since this
+      # tunnel can't own the *.lumero.fr wildcard (prod does).
+      CLOUDFLARE_API_TOKEN: ${PREVIEW_CLOUDFLARE_API_TOKEN:-}
+      CLOUDFLARE_ZONE_ID: ${PREVIEW_CLOUDFLARE_ZONE_ID:-}
+      CLOUDFLARE_TUNNEL_ID: ${PREVIEW_CLOUDFLARE_TUNNEL_ID:-}
     volumes:
       - preview-orchestrator-data-staging:/data
       - /var/run/docker.sock:/var/run/docker.sock

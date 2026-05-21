@@ -9,6 +9,7 @@ import {
   stopContainerIfRunning,
 } from "./docker";
 import { config } from "./config";
+import { deleteDnsRecord } from "./cloudflare";
 import fs from "node:fs";
 
 /**
@@ -98,6 +99,7 @@ export async function destroy(preview: PreviewRow) {
   await removeImageIfExists(imageNameForSlug(preview.slug));
   const dir = workspaceForSlug(preview.slug);
   if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+  await deleteDnsRecord(preview.hostname);
   storage.delete(preview.id);
   console.log(`[lifecycle] ${preview.slug}: destroyed`);
 }
