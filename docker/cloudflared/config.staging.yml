@@ -1,0 +1,26 @@
+# Locally-managed cloudflared config for the STAGING tunnel.
+#
+# Used instead of a dashboard-managed (token) tunnel so we can declare a
+# hostname-less catch-all ingress rule — required because the per-preview
+# hostnames are created dynamically (by the orchestrator's DNS automation) and
+# can't be pre-declared as dashboard Public Hostnames. The staging tunnel can't
+# reuse the *.lumero.fr wildcard either (production owns it).
+#
+# The tunnel UUID is passed on the command line (TUNNEL_ID env). The credentials
+# JSON is mounted at the path below (see docker-compose.staging.yml).
+#
+# Order matters: specific hostnames first, catch-all last.
+
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  - hostname: dev.lumero.fr
+    service: http://app:3000
+  - hostname: staging-webhook.lumero.fr
+    service: http://deploy-agent:9000
+  - hostname: preview-webhook-dev.lumero.fr
+    service: http://preview-orchestrator:8080
+  # Catch-all: every dynamically-created preview hostname (slug-id6-preview-dev
+  # .lumero.fr) lands here. The orchestrator dispatches by Host header to the
+  # matching preview container.
+  - service: http://preview-orchestrator:8080
