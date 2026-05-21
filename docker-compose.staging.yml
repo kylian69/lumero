@@ -1,0 +1,115 @@
+# Staging compose for Lume — a slimmed-down mirror of production used to test
+# the `develop` branch before opening a PR to `main`.
+#
+# Differences vs docker-compose.prod.yml (intentional, to keep it cheap and to
+# isolate it from prod):
+#   - App image is pulled with the :staging tag (built from `develop`).
+#   - Its own Postgres + named volume, seeded with fake data (no real client PII).
+#   - Its own deploy-agent with a SEPARATE webhook secret and its own deploy
+#     script (scripts/deploy-staging.sh), which also runs the seed.
+#   - Its own Cloudflare tunnel (e.g. dev.lumero.fr).
+#   - No backups, no uptime-kuma, no preview-orchestrator (those stay on prod).
+#
+# Run this from its OWN working copy on the VM (e.g. /opt/lumero-staging),
+# checked out on `develop`, separate from the production checkout. Bring it up
+# with an explicit project name so it never collides with prod:
+#   COMPOSE_PROJECT_NAME=lumero-staging docker compose -f docker-compose.staging.yml up -d
+#
+# All secrets are read from the .env file on the host (see .env.staging.example).
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: lume-postgres-staging
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?missing}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?missing}
+      POSTGRES_DB: ${POSTGRES_DB:?missing}
+    volumes:
+      - postgres-data-staging:/var/lib/postgresql/data
+    networks:
+      - lume-staging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  app:
+    image: ${IMAGE:-ghcr.io/kylian69/lumero:staging}
+    container_name: lume-app-staging
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lume-staging
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  deploy-agent:
+    build:
+      context: .
+      dockerfile: docker/deploy-agent.Dockerfile
+    image: lume-deploy-agent:local
+    container_name: lume-deploy-agent-staging
+    restart: unless-stopped
+    environment:
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?missing}
+      COMPOSE_PROJECT_DIR: /workspace
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-lumero-staging}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/webhook/hooks.staging.yaml:/etc/webhook/hooks.yaml:ro
+      - ./scripts/deploy-staging.sh:/scripts/deploy-staging.sh:ro
+      - .:/workspace
+    networks:
+      - lume-staging
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: lume-cloudflared-staging
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --protocol http2 run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?missing}
+    networks:
+      - lume-staging
+    depends_on:
+      app:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+networks:
+  lume-staging:
+    driver: bridge
+
+volumes:
+  postgres-data-staging:
