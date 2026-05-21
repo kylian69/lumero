@@ -126,6 +126,12 @@ services:
       IDLE_SHUTDOWN_DAYS: 3
       MAIN_APP_INTERNAL_URL: http://app:3000
       MAIN_APP_PUBLIC_URL: ${NEXT_PUBLIC_APP_URL:-https://dev.lumero.fr}
+      # Per-preview DNS automation (staging only): the orchestrator creates a
+      # proxied CNAME per preview pointing at the staging tunnel, since this
+      # tunnel can't own the *.lumero.fr wildcard (prod does).
+      CLOUDFLARE_API_TOKEN: ${PREVIEW_CLOUDFLARE_API_TOKEN:-}
+      CLOUDFLARE_ZONE_ID: ${PREVIEW_CLOUDFLARE_ZONE_ID:-}
+      CLOUDFLARE_TUNNEL_ID: ${PREVIEW_CLOUDFLARE_TUNNEL_ID:-}
     volumes:
       - preview-orchestrator-data-staging:/data
       - /var/run/docker.sock:/var/run/docker.sock

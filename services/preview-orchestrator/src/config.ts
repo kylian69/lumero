@@ -37,6 +37,14 @@ const schema = z.object({
   // Public URL of the main app, used to redirect unauthorized visitors to the
   // login / access-request page.
   MAIN_APP_PUBLIC_URL: z.string().default("https://lumero.fr"),
+
+  // Optional per-preview DNS automation (used by staging, where the tunnel
+  // can't own the *.lumero.fr wildcard). When all three are set, the
+  // orchestrator creates/deletes a proxied CNAME per preview pointing at the
+  // staging tunnel. Left empty in production, which relies on its wildcard.
+  CLOUDFLARE_API_TOKEN: z.string().optional(),
+  CLOUDFLARE_ZONE_ID: z.string().optional(),
+  CLOUDFLARE_TUNNEL_ID: z.string().optional(),
 });
 
 export const config = schema.parse(process.env);
