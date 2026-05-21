@@ -76,8 +76,19 @@ echo "[deploy-staging] Seeding database"
 IMAGE="$IMAGE" docker compose -p "$PROJECT" -f docker-compose.staging.yml run --rm --no-deps app npm run db:seed || \
   echo "[deploy-staging] WARN: seed failed (deploy still succeeded)" >&2
 
-echo "[deploy-staging] Reclaiming disk (dangling images)"
+# Rebuild + recreate the preview-orchestrator from the local working copy (built
+# on the VM, not pulled from a registry) so code changes take effect, exactly
+# like the prod deploy. The Docker layer cache makes this a near no-op when its
+# sources are unchanged.
+echo "[deploy-staging] Rebuilding preview-orchestrator"
+docker compose -p "$PROJECT" -f docker-compose.staging.yml build preview-orchestrator
+
+echo "[deploy-staging] Recreating preview-orchestrator container"
+docker compose -p "$PROJECT" -f docker-compose.staging.yml up -d --no-deps --force-recreate preview-orchestrator
+
+echo "[deploy-staging] Reclaiming disk (dangling images + BuildKit cache)"
 docker image prune -f >/dev/null
+docker builder prune -f >/dev/null
 
 notify_discord "✅ Déploiement staging terminé" \
   "Commit \`${SHORT_SHA}\` est en ligne sur l'environnement de test." \

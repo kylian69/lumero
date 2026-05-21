@@ -107,9 +107,40 @@ services:
         max-size: "5m"
         max-file: "3"
 
+  preview-orchestrator:
+    build:
+      context: services/preview-orchestrator
+      dockerfile: Dockerfile
+    image: lume-preview-orchestrator-staging:local
+    container_name: lume-preview-orchestrator-staging
+    restart: unless-stopped
+    environment:
+      INTERNAL_API_TOKEN: ${PREVIEW_INTERNAL_API_TOKEN:?missing}
+      GITHUB_WEBHOOK_SECRET: ${PREVIEW_GITHUB_WEBHOOK_SECRET:?missing}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:?missing}
+      PREVIEW_BASE_DOMAIN: ${PREVIEW_BASE_DOMAIN:-dev.lumero.fr}
+      # Docker network the preview containers join so the orchestrator reaches
+      # them by name. Compose names it "<project>_<network-key>", i.e.
+      # "lumero-staging_lume-staging" when brought up with COMPOSE_PROJECT_NAME.
+      PREVIEW_NETWORK: ${PREVIEW_NETWORK:-lumero-staging_lume-staging}
+      IDLE_SHUTDOWN_DAYS: 3
+      MAIN_APP_INTERNAL_URL: http://app:3000
+      MAIN_APP_PUBLIC_URL: ${NEXT_PUBLIC_APP_URL:-https://dev.lumero.fr}
+    volumes:
+      - preview-orchestrator-data-staging:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - lume-staging
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   lume-staging:
     driver: bridge
 
 volumes:
   postgres-data-staging:
+  preview-orchestrator-data-staging:
