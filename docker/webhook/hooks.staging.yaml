@@ -1,0 +1,18 @@
+# Hook config for adnanh/webhook (staging stack).
+# Validates an HMAC-SHA256 signature posted by GitHub Actions
+# in the `X-Hub-Signature-256` header, then runs deploy-staging.sh.
+
+- id: deploy-lume-staging
+  execute-command: /scripts/deploy-staging.sh
+  command-working-directory: /workspace
+  response-message: "staging deploy triggered"
+  pass-arguments-to-command:
+    - source: payload
+      name: image
+  trigger-rule:
+    match:
+      type: payload-hmac-sha256
+      secret: '{{ getenv "WEBHOOK_SECRET" }}'
+      parameter:
+        source: header
+        name: X-Hub-Signature-256
