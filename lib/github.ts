@@ -40,7 +40,7 @@ export async function createGithubRepo(slug: string): Promise<{
   const account = process.env.GITHUB_ORG;
   if (!account) throw new Error("GITHUB_ORG is not set");
 
-  const repoName = `lumero-${slug}`;
+  const repoName = `${process.env.GITHUB_REPO_PREFIX ?? "lumero-"}${slug}`;
   const body = JSON.stringify({
     name: repoName,
     private: true,
