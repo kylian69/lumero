@@ -20,6 +20,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute application version
+        id: version
+        run: |
+          set -euo pipefail
+          OUT=$(node scripts/compute-version.mjs)
+          echo "version=$(echo "$OUT" | jq -r .version)" >> "$GITHUB_OUTPUT"
+          echo "commit=$(echo "$OUT"  | jq -r .commit)"  >> "$GITHUB_OUTPUT"
+          echo "date=$(echo "$OUT"    | jq -r .date)"    >> "$GITHUB_OUTPUT"
+          echo "channel=$(echo "$OUT" | jq -r .channel)" >> "$GITHUB_OUTPUT"
 
       - name: Notify Discord (build started)
         if: vars.DISCORD_WEBHOOK_URL != ''
@@ -69,6 +81,11 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+            APP_COMMIT=${{ steps.version.outputs.commit }}
+            APP_BUILD_DATE=${{ steps.version.outputs.date }}
+            APP_CHANNEL=staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

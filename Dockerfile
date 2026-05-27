@@ -21,6 +21,17 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Version metadata, computed by CI (see scripts/compute-version.mjs) and
+# baked into the client bundle so it can be shown below the footer.
+ARG APP_VERSION=0.0.0-dev
+ARG APP_COMMIT=dev
+ARG APP_BUILD_DATE=
+ARG APP_CHANNEL=dev
+ENV NEXT_PUBLIC_APP_VERSION=$APP_VERSION \
+    NEXT_PUBLIC_APP_COMMIT=$APP_COMMIT \
+    NEXT_PUBLIC_APP_BUILD_DATE=$APP_BUILD_DATE \
+    NEXT_PUBLIC_APP_CHANNEL=$APP_CHANNEL
+
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN mkdir -p ./public && npm run build
 

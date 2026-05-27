@@ -14,12 +14,25 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute application version
+        id: version
+        run: |
+          set -euo pipefail
+          OUT=$(node scripts/compute-version.mjs)
+          echo "version_json=$OUT"
+          echo "version=$(echo "$OUT" | jq -r .version)" >> "$GITHUB_OUTPUT"
+          echo "commit=$(echo "$OUT"  | jq -r .commit)"  >> "$GITHUB_OUTPUT"
+          echo "date=$(echo "$OUT"    | jq -r .date)"    >> "$GITHUB_OUTPUT"
+          echo "channel=$(echo "$OUT" | jq -r .channel)" >> "$GITHUB_OUTPUT"
 
       - name: Notify Discord (build started)
         if: vars.DISCORD_WEBHOOK_URL != ''
@@ -60,6 +73,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
+            type=raw,value=v${{ steps.version.outputs.version }}
             type=sha,format=long
 
       - name: Build and push
@@ -69,8 +83,30 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+            APP_COMMIT=${{ steps.version.outputs.commit }}
+            APP_BUILD_DATE=${{ steps.version.outputs.date }}
+            APP_CHANNEL=${{ steps.version.outputs.channel }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Tag commit with version
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          TAG="v${VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
 
       - name: Trigger deploy webhook
         if: vars.DEPLOY_WEBHOOK_URL != ''
