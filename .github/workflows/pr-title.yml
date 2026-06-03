@@ -1,0 +1,36 @@
+name: Lint PR title
+
+# Quand "Squash and merge" est utilisé, c'est le TITRE de la PR qui devient
+# le message du commit de merge. On le valide donc séparément pour garantir
+# que la version sera bumpée correctement par scripts/compute-version.mjs.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+    branches: [main, develop]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install commitlint
+        run: npm install --no-save @commitlint/cli@^19 @commitlint/config-conventional@^19
+
+      - name: Validate PR title against commitlint config
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          echo "PR title: $PR_TITLE"
+          printf '%s' "$PR_TITLE" | npx commitlint --verbose
