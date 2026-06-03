@@ -27,6 +27,9 @@ jobs:
         id: version
         run: |
           set -euo pipefail
+          # The version is derived from the develop branch, so make sure its
+          # remote-tracking ref exists even when building another branch.
+          git fetch --no-tags origin develop:refs/remotes/origin/develop || true
           OUT=$(node scripts/compute-version.mjs)
           echo "version_json=$OUT"
           echo "version=$(echo "$OUT" | jq -r .version)" >> "$GITHUB_OUTPUT"
