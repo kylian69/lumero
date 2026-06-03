@@ -429,3 +429,35 @@ export function previewPublishedTemplate(args: {
   const text = `${greeting}\n\nVotre aperçu "${args.projectName}" est prêt !\n\nConsultez-le : ${args.previewUrl}\n\nConnectez-vous à votre espace client pour nous faire part de vos retours : ${portalUrl}`;
   return { subject, html, text };
 }
+
+// ───────────────────────── Facturation ─────────────────────────
+
+export function invoiceIssuedTemplate(args: {
+  number: string;
+  amountCents: number;
+  description?: string | null;
+  hostedInvoiceUrl?: string | null;
+}): Template {
+  const portalUrl = `${appUrl()}/portal/billing`;
+  const subject = `Votre facture ${args.number} — Lumero`;
+  const html = layout(
+    subject,
+    `<p>Bonjour,</p>
+     <p>Nous vous confirmons la bonne réception de votre paiement. Votre facture est disponible.</p>
+     <ul>
+       <li><strong>Facture :</strong> ${escape(args.number)}</li>
+       ${args.description ? `<li><strong>Objet :</strong> ${escape(args.description)}</li>` : ""}
+       <li><strong>Montant :</strong> ${formatEUR(args.amountCents)}</li>
+     </ul>
+     ${
+       args.hostedInvoiceUrl
+         ? `<p style="margin:4px 0;"><a href="${escape(args.hostedInvoiceUrl)}" style="color:#555;font-size:13px;">Télécharger ma facture (PDF)</a></p>`
+         : ""
+     }
+     <p>Vous retrouvez l'ensemble de vos factures dans votre espace client.</p>`,
+    portalUrl,
+    "Voir mes factures",
+  );
+  const text = `Votre facture ${args.number} (${formatEUR(args.amountCents)}) est disponible dans votre espace client : ${portalUrl}`;
+  return { subject, html, text };
+}

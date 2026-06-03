@@ -8,6 +8,7 @@ import { getAdminEmails } from "@/lib/email/recipients";
 import { ticketMessageToAdminsTemplate } from "@/lib/email/templates";
 import { nextTicketNumber } from "@/lib/ticket-number";
 import { formatEUR } from "@/lib/format";
+import { isStripeEnabled, getStripe } from "@/lib/stripe";
 
 const cancelSchema = z.object({
   reason: z.string().max(2000).optional(),
@@ -46,6 +47,15 @@ export async function POST(
 
   const tierLabel = subscription.tier === "LIGHT" ? "Light" : "Complet";
   const reason = parsed.data.reason?.trim();
+
+  // Annule l'abonnement côté Stripe (best-effort) si un identifiant existe.
+  if (isStripeEnabled() && subscription.stripeSubscriptionId) {
+    try {
+      await getStripe().subscriptions.cancel(subscription.stripeSubscriptionId);
+    } catch (err) {
+      console.error("[stripe] échec annulation abonnement", err);
+    }
+  }
 
   const result = await prisma.$transaction(async (tx) => {
     const updated = await tx.subscription.update({

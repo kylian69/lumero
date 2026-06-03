@@ -7,52 +7,62 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { CancelSubscription } from "@/components/portal/cancel-subscription";
+import { CheckoutButton } from "@/components/portal/checkout-button";
+import { isStripeEnabled } from "@/lib/stripe";
+import { monthlyAmountCents } from "@/lib/pricing";
 import { formatEUR, formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const PLANS = [
-  {
-    tier: "LIGHT",
-    name: "Light",
-    price: 1900,
-    features: [
-      "Hébergement & certificat SSL",
-      "2 modifications par mois",
-      "Surveillance uptime 24/7",
-      "Support par email",
-    ],
-  },
-  {
-    tier: "COMPLETE",
-    name: "Complet",
-    price: 4900,
-    featured: true,
-    features: [
-      "Modifications illimitées",
-      "Optimisation SEO en continu",
-      "Support prioritaire (24h)",
-      "Rapport mensuel d'activité",
-    ],
-  },
-];
+const PLAN_FEATURES: Record<"LIGHT" | "COMPLETE", string[]> = {
+  LIGHT: [
+    "Hébergement & certificat SSL",
+    "2 modifications par mois",
+    "Surveillance uptime 24/7",
+    "Support par email",
+  ],
+  COMPLETE: [
+    "Modifications illimitées",
+    "Optimisation SEO en continu",
+    "Support prioritaire (24h)",
+    "Rapport mensuel d'activité",
+  ],
+};
 
 export default async function PortalSubscriptionPage() {
   const session = await getSession();
   const userId = session!.user.id;
+  const stripeOn = isStripeEnabled();
 
-  const subscriptions = await prisma.subscription.findMany({
-    where: { project: { userId } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [subscriptions, project] = await Promise.all([
+    prisma.subscription.findMany({
+      where: { project: { userId } },
+      orderBy: { createdAt: "desc" },
+    }),
+    // Projet de référence pour le paiement de l'abonnement (le plus récent).
+    prisma.project.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, planType: true },
+    }),
+  ]);
 
   const active = subscriptions.find((s) => s.status === "ACTIVE");
+  const planType = project?.planType ?? "STANDARD";
+
+  const plans = (["LIGHT", "COMPLETE"] as const).map((tier) => ({
+    tier,
+    name: tier === "LIGHT" ? "Light" : "Complet",
+    price: monthlyAmountCents(planType, tier),
+    featured: tier === "COMPLETE",
+    features: PLAN_FEATURES[tier],
+  }));
 
   return (
     <div>
       <PageHeader
         title="Abonnement"
-        description="Retrouvez ici les détails de votre abonnement mensuel. Pour tout changement, contactez-nous."
+        description="Retrouvez ici les détails de votre abonnement mensuel."
       />
 
       {active ? (
@@ -75,7 +85,9 @@ export default async function PortalSubscriptionPage() {
                 </p>
                 <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
-                  Prochain prélèvement le {formatDate(active.currentPeriodEnd)}
+                  {active.cancelAtPeriodEnd
+                    ? `Se termine le ${formatDate(active.currentPeriodEnd)}`
+                    : `Prochain prélèvement le ${formatDate(active.currentPeriodEnd)}`}
                 </p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -95,24 +107,20 @@ export default async function PortalSubscriptionPage() {
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">
               Vous n'avez pas d'abonnement actif pour le moment. Choisissez une
-              formule ci-dessous et notre équipe vous accompagnera pour sa mise
-              en place.
+              formule ci-dessous.
             </p>
           </CardContent>
         </Card>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        {PLANS.map((plan) => {
+        {plans.map((plan) => {
           const isActive = active?.tier === plan.tier;
+          const canCheckout = stripeOn && !active && !!project;
           return (
             <Card
               key={plan.tier}
-              className={
-                plan.featured
-                  ? "border-primary/40 bg-primary/[0.03]"
-                  : undefined
-              }
+              className={plan.featured ? "border-primary/40 bg-primary/[0.03]" : undefined}
             >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-base">
@@ -127,10 +135,7 @@ export default async function PortalSubscriptionPage() {
               <CardContent>
                 <p className="text-3xl font-semibold tracking-tight">
                   {formatEUR(plan.price)}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {" "}
-                    / mois
-                  </span>
+                  <span className="text-sm font-normal text-muted-foreground"> / mois</span>
                 </p>
                 <ul className="mt-4 space-y-2 text-sm">
                   {plan.features.map((f) => (
@@ -140,20 +145,38 @@ export default async function PortalSubscriptionPage() {
                     </li>
                   ))}
                 </ul>
-                <Button
-                  asChild
-                  variant={isActive ? "outline" : plan.featured ? "default" : "outline"}
-                  className="mt-6 w-full"
-                  disabled={isActive}
-                >
-                  <Link
-                    href={`/portal/support/new?topic=FACTURATION&subject=${encodeURIComponent(
-                      `Passage à la formule ${plan.name}`,
-                    )}`}
-                  >
-                    {isActive ? "Formule actuelle" : "Choisir cette formule"}
-                  </Link>
-                </Button>
+
+                <div className="mt-6">
+                  {isActive ? (
+                    <Button variant="outline" className="w-full" disabled>
+                      Formule actuelle
+                    </Button>
+                  ) : canCheckout ? (
+                    <CheckoutButton
+                      endpoint="/api/portal/checkout/subscription"
+                      payload={{ projectId: project!.id, tier: plan.tier }}
+                      className="w-full"
+                      variant={plan.featured ? "default" : "outline"}
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Souscrire — {formatEUR(plan.price)}/mois
+                    </CheckoutButton>
+                  ) : (
+                    <Button
+                      asChild
+                      variant={plan.featured ? "default" : "outline"}
+                      className="w-full"
+                    >
+                      <Link
+                        href={`/portal/support/new?topic=FACTURATION&subject=${encodeURIComponent(
+                          `Passage à la formule ${plan.name}`,
+                        )}`}
+                      >
+                        Choisir cette formule
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );

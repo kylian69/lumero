@@ -47,7 +47,7 @@ Lumero only collects data strictly necessary for the purposes described below.
 
 ### 2.3 Data we do **not** collect
 
-Lumero does **not** collect: precise location data, health data, banking data (payments are currently made by bank transfer / invoice, with no card data collected on the platform), data relating to minors (the service is not intended for persons under 18).
+Lumero does **not** collect: precise location data, health data, **payment card data** (online payments are processed by our provider Stripe, which is PCI-DSS certified: no card details ever pass through or are stored on Lumero's servers — we only keep a transaction identifier and the payment status), data relating to minors (the service is not intended for persons under 18).
 
 No data is used for targeted advertising, automated profiling, or sold to data brokers.
 
@@ -72,6 +72,7 @@ Your data is only accessible to authorised personnel at Lumero (the publisher an
 | Sub-processor | Role | Data concerned | Location |
 |---|---|---|---|
 | **Brevo** (Sendinblue SAS) | Sending transactional emails | Recipient email, email content, possible attachments | European Union (France) |
+| **Stripe** (Stripe Payments Europe Ltd) | Online payment processing and invoicing | Name, email, amount, transaction and card identifiers (collected and stored directly by Stripe, never by Lumero) | Ireland (EU) / United States — Standard Contractual Clauses |
 | **GitHub** (GitHub Inc., Microsoft subsidiary) | Hosting code repositories of client websites | Project name, slug, generated site content (no visitor personal data) | United States — Standard Contractual Clauses |
 | **Vercel** (Vercel Inc.) | Deployment and preview of client websites | Project IDs, deployment URLs, technical metadata | United States — Standard Contractual Clauses |
 | **Lumero platform host** | Hosting the database and uploaded files | All platform data | European Union — *[TO BE COMPLETED once the host is selected]* |
