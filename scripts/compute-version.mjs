@@ -46,10 +46,32 @@ function fmt(s) {
 const pkg = JSON.parse(readFileSync(resolve(repoRoot, "package.json"), "utf8"));
 const fallbackVersion = pkg.version || "0.1.0";
 
-const lastTag = git("describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*'");
+// Find the highest SemVer tag in the whole repo (not just ancestors of HEAD).
+// On branches like `develop`, release tags live on `main` and are not part of
+// the develop history, so `git describe` would return empty and the version
+// would stay stuck on package.json's fallback.
+const allTags = git("tag --list 'v[0-9]*.[0-9]*.[0-9]*'")
+  .split("\n")
+  .map((t) => t.trim())
+  .filter(Boolean)
+  .map((t) => ({ tag: t, sv: parseSemver(t) }))
+  .filter((x) => x.sv)
+  .sort((a, b) => {
+    if (a.sv.major !== b.sv.major) return b.sv.major - a.sv.major;
+    if (a.sv.minor !== b.sv.minor) return b.sv.minor - a.sv.minor;
+    return b.sv.patch - a.sv.patch;
+  });
+
+const lastTag = allTags[0]?.tag || "";
 const base = parseSemver(lastTag) ?? parseSemver(fallbackVersion) ?? { major: 0, minor: 1, patch: 0 };
 
-const range = lastTag ? `${lastTag}..HEAD` : "HEAD";
+// Count commits from the merge-base with the highest tag so the bump only
+// reflects work that is actually new on this branch.
+let range = "HEAD";
+if (lastTag) {
+  const mergeBase = git(`merge-base ${lastTag} HEAD`);
+  range = mergeBase ? `${mergeBase}..HEAD` : `${lastTag}..HEAD`;
+}
 const log = git(`log ${range} --pretty=format:%s%n%b%n--END--`);
 
 let bumpKind = null;
