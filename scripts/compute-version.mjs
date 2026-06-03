@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 // Compute the application's semantic version from git history.
 // Strategy:
-//   - Find the most recent annotated/lightweight tag matching v<semver>.
-//   - Inspect commits since that tag and bump:
+//   - Find the highest v<semver> tag in the whole repo (the last release).
+//   - Inspect the commits accumulated on the integration branch (`develop`)
+//     since that tag and bump:
 //       * major  if any commit has "BREAKING CHANGE" in body or "!" before ":"
 //       * minor  if any commit starts with "feat"
 //       * patch  otherwise (and only if there is at least one commit)
+//   - The version is ALWAYS derived from `develop`, regardless of the branch
+//     being built. This guarantees prod (main) and dev (develop) converge on
+//     the same version: promoting develop -> main releases exactly the version
+//     that was validated on dev, instead of recomputing a different bump from
+//     a squashed merge commit.
 //   - If no tag exists, start from package.json's "version" field.
 // Output (stdout): JSON { version, commit, date, channel }
 
@@ -65,12 +71,19 @@ const allTags = git("tag --list 'v[0-9]*.[0-9]*.[0-9]*'")
 const lastTag = allTags[0]?.tag || "";
 const base = parseSemver(lastTag) ?? parseSemver(fallbackVersion) ?? { major: 0, minor: 1, patch: 0 };
 
-// Count commits from the merge-base with the highest tag so the bump only
-// reflects work that is actually new on this branch.
-let range = "HEAD";
+// Resolve the integration branch ref used to decide the bump. We always read
+// the bump from `develop` so prod and dev land on the same version. Prefer the
+// remote-tracking ref (available in CI after fetch), fall back to the local
+// branch, then to HEAD when neither exists (e.g. a fresh shallow checkout).
+const releaseRef =
+  ["origin/develop", "develop"].find((ref) => git(`rev-parse --verify --quiet ${ref}`)) || "HEAD";
+
+// Count commits accumulated on the integration branch since the last release,
+// using the merge-base so the bump only reflects genuinely new work.
+let range = releaseRef;
 if (lastTag) {
-  const mergeBase = git(`merge-base ${lastTag} HEAD`);
-  range = mergeBase ? `${mergeBase}..HEAD` : `${lastTag}..HEAD`;
+  const mergeBase = git(`merge-base ${lastTag} ${releaseRef}`);
+  range = mergeBase ? `${mergeBase}..${releaseRef}` : `${lastTag}..${releaseRef}`;
 }
 const log = git(`log ${range} --pretty=format:%s%n%b%n--END--`);
 
