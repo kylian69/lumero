@@ -1,8 +1,10 @@
 import { Logo } from "@/components/logo";
 import { ManageCookiesLink } from "@/components/cookie-consent/manage-cookies-link";
+import { VersionTag } from "@/components/sections/version-tag";
 
 export function Footer() {
   return (
+    <>
     <footer className="border-t border-border/60 py-12">
       <div className="container flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-2">
@@ -53,8 +55,10 @@ export function Footer() {
         </nav>
       </div>
       <p className="container mt-8 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Lumero. Tous droits réservés. <span aria-hidden="true">·</span> <span className="opacity-60">deploy v2 ✅</span>
+        © {new Date().getFullYear()} Lumero. Tous droits réservés.
       </p>
     </footer>
+    <VersionTag />
+    </>
   );
 }

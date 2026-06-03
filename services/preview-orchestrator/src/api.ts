@@ -3,6 +3,7 @@ import { z } from "zod";
 import { config } from "./config";
 import { storage } from "./storage";
 import { buildAndStart, destroy, provision, start, stop } from "./lifecycle";
+import { ensureDnsRecord } from "./cloudflare";
 
 export const api = Router();
 
@@ -30,6 +31,12 @@ api.post("/projects", async (req, res) => {
     return;
   }
   const preview = provision(parsed.data);
+  // Best-effort: ensure the preview hostname resolves to the tunnel. No-op
+  // unless DNS automation is configured (staging). Failure shouldn't block
+  // registration — it's surfaced in logs and retried on next provision.
+  ensureDnsRecord(preview.hostname).catch((err) =>
+    console.error("[api] ensureDnsRecord failed:", err)
+  );
   res.json({ preview });
 });
 
