@@ -1,0 +1,72 @@
+name: Auto-format PR title
+
+# Met automatiquement le titre de la PR en conformité Conventional Commits
+# (même nomenclature que commitlint.config.mjs / pr-title.yml).
+# Stratégie : si le titre n'est pas conforme, on reprend le header du premier
+# commit conforme de la PR (les commits sont déjà validés par le hook husky
+# commit-msg). Fallback : on préfixe le titre existant par "chore:".
+# Réécrire le titre redéclenche l'événement "edited" : le titre est alors
+# valide, donc aucune réécriture → pas de boucle.
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches: [main, develop]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  autofix-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Normalize PR title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const TYPES = [
+              "feat", "fix", "perf", "refactor", "docs", "test",
+              "build", "ci", "chore", "style", "revert",
+            ];
+            // type(scope optionnel)!? : sujet non vide — header <= 100
+            const re = new RegExp(`^(${TYPES.join("|")})(\\([^)]+\\))?!?: .+`);
+            const isValid = (s) =>
+              typeof s === "string" && s.length <= 100 && re.test(s);
+
+            const pr = context.payload.pull_request;
+            const current = pr.title || "";
+
+            if (isValid(current)) {
+              core.info(`Titre déjà conforme : "${current}"`);
+              return;
+            }
+
+            // Cherche le premier commit dont le header est conforme.
+            const commits = await github.paginate(
+              github.rest.pulls.listCommits,
+              { ...context.repo, pull_number: pr.number, per_page: 100 }
+            );
+            let next = null;
+            for (const c of commits) {
+              const header = (c.commit.message || "").split("\n")[0].trim();
+              if (isValid(header)) {
+                next = header;
+                break;
+              }
+            }
+
+            // Fallback : préfixe "chore:" en tronquant à 100 caractères.
+            if (!next) {
+              const subject = current.trim() || "update";
+              next = `chore: ${subject}`.slice(0, 100);
+            }
+
+            if (next === current) return;
+
+            core.info(`Réécriture du titre : "${current}" -> "${next}"`);
+            await github.rest.pulls.update({
+              ...context.repo,
+              pull_number: pr.number,
+              title: next,
+            });
