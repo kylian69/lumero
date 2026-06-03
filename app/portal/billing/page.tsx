@@ -23,7 +23,7 @@ export default async function PortalBillingPage() {
   const userId = session!.user.id;
   const stripeOn = isStripeEnabled();
 
-  const [invoices, unpaidProjects] = await Promise.all([
+  const [invoices, unpaidProjects, user] = await Promise.all([
     prisma.invoice.findMany({
       where: { userId },
       orderBy: { issuedAt: "desc" },
@@ -32,13 +32,32 @@ export default async function PortalBillingPage() {
       where: { userId, setupPaidAt: null, planType: { not: "NONE" } },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true },
+    }),
   ]);
+
+  const hasBillingPortal = stripeOn && !!user?.stripeCustomerId;
 
   return (
     <div>
       <PageHeader
         title="Facturation"
         description="Réglez vos sites et retrouvez l'ensemble de vos factures."
+        actions={
+          hasBillingPortal ? (
+            <CheckoutButton
+              endpoint="/api/portal/billing-portal"
+              payload={{}}
+              variant="outline"
+              size="sm"
+            >
+              <CreditCard className="h-4 w-4" />
+              Gérer mes paiements
+            </CheckoutButton>
+          ) : undefined
+        }
       />
 
       {/* Sites à régler */}
