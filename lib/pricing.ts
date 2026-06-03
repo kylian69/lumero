@@ -23,3 +23,29 @@ export function monthlyPricesForPlan(
 ): Record<SubscriptionTier, number> {
   return MONTHLY_PRICE_CENTS[planType] ?? MONTHLY_PRICE_CENTS.NONE;
 }
+
+// Frais de mise en place (achat unique du site), en centimes.
+// Alignés sur la grille publique (components/sections/pricing.tsx).
+const SETUP_FEE_CENTS: Record<PlanType, number> = {
+  NONE: 0,
+  START: 19000,
+  STANDARD: 29000,
+  PRO: 49000,
+};
+
+export function setupFeeCents(planType: PlanType): number {
+  return SETUP_FEE_CENTS[planType] ?? 0;
+}
+
+export const PLAN_LABELS: Record<PlanType, string> = {
+  NONE: "Sans formule",
+  START: "Start",
+  STANDARD: "Standard",
+  PRO: "Pro",
+};
+
+export const TIER_LABELS: Record<SubscriptionTier, string> = {
+  NONE: "Sans abonnement",
+  LIGHT: "Light",
+  COMPLETE: "Complet",
+};

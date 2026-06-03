@@ -16,6 +16,7 @@ import {
   Sparkles,
   Globe,
   CreditCard,
+  Receipt,
   UserCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -33,6 +34,7 @@ const iconMap: Record<string, LucideIcon> = {
   Sparkles,
   Globe,
   CreditCard,
+  Receipt,
   UserCircle,
 };
 
