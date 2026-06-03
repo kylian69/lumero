@@ -21,8 +21,6 @@
 bugs : 
     - problème d'alignement sur l'espace client sur dans l'encadré des sites/projets, sur les boutons : voir mon aprçu, mettre en veille, demander une modification; ils ne sont pas tous correctement alignés
 
-- mise en place versionning à chaque déploiement dans le footer
-
 - refonte total de la section Abonnement dans l'espace client 
 
 - mettre en place le système de paiement 
