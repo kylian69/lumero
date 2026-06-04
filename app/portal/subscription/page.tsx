@@ -91,12 +91,23 @@ export default async function PortalSubscriptionPage() {
                 </p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="outline" asChild>
-                  <Link href="/portal/support/new?topic=FACTURATION">
-                    <MessageCircle className="h-4 w-4" />
-                    Modifier
-                  </Link>
-                </Button>
+                {stripeOn && active.stripeSubscriptionId ? (
+                  <CheckoutButton
+                    endpoint="/api/portal/billing-portal"
+                    payload={{}}
+                    variant="outline"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Gérer
+                  </CheckoutButton>
+                ) : (
+                  <Button variant="outline" asChild>
+                    <Link href="/portal/support/new?topic=FACTURATION">
+                      <MessageCircle className="h-4 w-4" />
+                      Modifier
+                    </Link>
+                  </Button>
+                )}
                 <CancelSubscription subscriptionId={active.id} />
               </div>
             </div>

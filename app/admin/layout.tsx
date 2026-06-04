@@ -47,6 +47,7 @@ export default async function AdminLayout({
       icon: "LifeBuoy",
       badge: openTickets || undefined,
     },
+    { label: "Facturation", href: "/admin/billing", icon: "Receipt" },
     { label: "Utilisateurs", href: "/admin/team", icon: "UserCog" },
     { label: "Mon compte", href: "/admin/settings", icon: "UserCircle" },
   ];

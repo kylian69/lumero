@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Sparkles, LifeBuoy } from "lucide-react";
+import { ArrowLeft, Calendar, Sparkles, LifeBuoy, Receipt, Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime, formatEUR } from "@/lib/format";
 import { ActivityTimeline } from "@/components/admin/activity-timeline";
 import { getClientActivity } from "@/lib/activity";
 import { ClientContactEditor, ClientNotes, ClientActions } from "@/components/admin/client-detail";
@@ -56,11 +56,30 @@ export default async function ClientDetailPage({
         orderBy: { createdAt: "desc" },
         include: { author: { select: { name: true, email: true } } },
       },
+      invoices: { orderBy: { issuedAt: "desc" }, take: 12 },
+      payments: { orderBy: { createdAt: "desc" }, take: 12 },
     },
   });
   if (!client) notFound();
 
   const activity = await getClientActivity(client.id);
+
+  const totalPaid = client.payments
+    .filter((p) => p.status === "PAID")
+    .reduce((sum, p) => sum + p.amount, 0);
+  const PAYMENT_LABEL: Record<string, string> = {
+    PAID: "Réglé",
+    PENDING: "En attente",
+    PROCESSING: "En cours",
+    FAILED: "Échec",
+    REFUNDED: "Remboursé",
+    CANCELED: "Annulé",
+  };
+  const KIND_LABEL: Record<string, string> = {
+    SETUP: "Création du site",
+    SUBSCRIPTION: "Abonnement",
+    OTHER: "Autre",
+  };
 
   return (
     <div>
@@ -90,6 +109,120 @@ export default async function ClientDetailPage({
               subscription: p.subscriptions[0] ?? null,
             }))}
           />
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between gap-2 text-base">
+                <span className="flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-primary" />
+                  Facturation
+                </span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  Total encaissé&nbsp;:{" "}
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {formatEUR(totalPaid)}
+                  </span>
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Factures
+                </p>
+                {client.invoices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Aucune facture émise.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-border/50">
+                    {client.invoices.map((inv) => (
+                      <div
+                        key={inv.id}
+                        className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm"
+                      >
+                        <div>
+                          <span className="font-medium tabular-nums">
+                            {inv.number}
+                          </span>
+                          <span className="ml-2 text-muted-foreground">
+                            {KIND_LABEL[inv.kind] ?? inv.kind}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-muted-foreground">
+                            {formatDate(inv.issuedAt)}
+                          </span>
+                          <span className="font-medium tabular-nums">
+                            {formatEUR(inv.amount)}
+                          </span>
+                          {inv.pdfUrl || inv.hostedInvoiceUrl ? (
+                            <a
+                              href={(inv.pdfUrl || inv.hostedInvoiceUrl)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-primary hover:underline"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              PDF
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Paiements
+                </p>
+                {client.payments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Aucun paiement enregistré.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-border/50">
+                    {client.payments.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm"
+                      >
+                        <div>
+                          <span className="font-medium">
+                            {KIND_LABEL[p.kind] ?? p.kind}
+                          </span>
+                          <span
+                            className={
+                              "ml-2 text-xs " +
+                              (p.status === "PAID"
+                                ? "text-emerald-600"
+                                : p.status === "FAILED" || p.status === "CANCELED"
+                                  ? "text-red-600"
+                                  : "text-muted-foreground")
+                            }
+                          >
+                            {PAYMENT_LABEL[p.status] ?? p.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-muted-foreground">
+                            {formatDate(p.paidAt ?? p.createdAt)}
+                          </span>
+                          <span className="font-medium tabular-nums">
+                            {formatEUR(p.amount)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
