@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useState } from "react";
-import { Search, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, RefreshCw, ChevronDown, ChevronRight, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -70,23 +70,34 @@ export function LogsExplorer({
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  const buildParams = useCallback(() => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (level) params.set("level", level);
+    if (category) params.set("category", category);
+    if (entityType) params.set("entityType", entityType);
+    if (from) params.set("from", new Date(from).toISOString());
+    if (to) params.set("to", new Date(to).toISOString());
+    return params;
+  }, [q, level, category, entityType, from, to]);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (q) params.set("q", q);
-      if (level) params.set("level", level);
-      if (category) params.set("category", category);
-      if (entityType) params.set("entityType", entityType);
-      if (from) params.set("from", new Date(from).toISOString());
-      if (to) params.set("to", new Date(to).toISOString());
+      const params = buildParams();
       params.set("page", String(page));
       const res = await fetch(`/api/admin/logs?${params.toString()}`);
       if (res.ok) setData(await res.json());
     } finally {
       setLoading(false);
     }
-  }, [q, level, category, entityType, from, to, page]);
+  }, [buildParams, page]);
+
+  const exportCsv = useCallback(() => {
+    const params = buildParams();
+    params.set("format", "csv");
+    window.open(`/api/admin/logs?${params.toString()}`, "_blank");
+  }, [buildParams]);
 
   // Recharge quand les filtres (hors recherche libre) changent.
   useEffect(() => {
@@ -175,6 +186,10 @@ export function LogsExplorer({
         />
         <Button variant="outline" onClick={() => load()} disabled={loading}>
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+        </Button>
+        <Button variant="outline" onClick={exportCsv} title="Exporter en CSV">
+          <Download className="h-4 w-4" />
+          CSV
         </Button>
       </div>
 
