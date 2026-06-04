@@ -622,17 +622,44 @@ model TicketAttachment {
 // ──────────────────────────────────────────────────────────────
 
 model ActivityLog {
-  id         String   @id @default(cuid())
+  id         String      @id @default(cuid())
   userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  level      LogLevel    @default(INFO)
+  category   LogCategory @default(GENERAL)
   entityType String   // "prospect" | "project" | "ticket" | "subscription"
   entityId   String
   action     String   // "created" | "status_changed" | "note_added" | ...
+  message    String?  // libellé lisible facultatif
   metadata   String?  // JSON
+  ip         String?  // adresse IP de l'acteur (si applicable)
+  userAgent  String?  // user-agent de l'acteur (si applicable)
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
   @@index([createdAt])
+  @@index([category, createdAt])
+  @@index([level, createdAt])
+  @@index([action])
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+  SECURITY
+}
+
+enum LogCategory {
+  AUTH
+  ACCOUNT
+  CRM
+  PROJECT
+  BILLING
+  SUPPORT
+  CUSTOMIZATION
+  SYSTEM
+  GENERAL
 }
 
 // ──────────────────────────────────────────────────────────────

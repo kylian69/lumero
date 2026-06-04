@@ -176,6 +176,25 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
     where: { stripeSubscriptionId: subId },
     data: { status: "PAST_DUE" },
   });
+
+  const sub = await prisma.subscription.findUnique({
+    where: { stripeSubscriptionId: subId },
+    include: { project: { select: { id: true, userId: true } } },
+  });
+  await logActivity({
+    userId: sub?.project.userId ?? null,
+    level: "ERROR",
+    category: "BILLING",
+    entityType: "subscription",
+    entityId: sub?.id ?? subId,
+    action: "invoice_payment_failed",
+    message: "Échec de paiement d'une facture d'abonnement",
+    metadata: {
+      stripeInvoiceId: invoice.id,
+      amount: invoice.amount_due,
+      stripeSubscriptionId: subId,
+    },
+  });
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
