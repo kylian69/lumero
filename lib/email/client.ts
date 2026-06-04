@@ -27,6 +27,31 @@ function parseSender(value: string): Sender {
   return { email: value.trim() };
 }
 
+// Journalise un échec d'envoi dans le pipeline central. Import dynamique pour
+// éviter un cycle (log → triggers → email) et skipTriggers car alerter par
+// email d'une panne d'email serait contre-productif.
+async function logEmailFailure(
+  subject: string,
+  recipients: string[],
+  detail: Record<string, unknown>,
+) {
+  try {
+    const { recordLog } = await import("@/lib/log");
+    await recordLog({
+      level: "ERROR",
+      category: "SYSTEM",
+      entityType: "system",
+      entityId: "email",
+      action: "email_send_failed",
+      message: `Échec d'envoi d'email : ${subject}`,
+      metadata: { subject, recipients, ...detail },
+      skipTriggers: true,
+    });
+  } catch {
+    /* la journalisation ne doit jamais casser l'envoi */
+  }
+}
+
 export async function sendEmail(params: SendEmailParams): Promise<void> {
   const recipients = Array.isArray(params.to) ? params.to : [params.to];
   const filtered = recipients.filter((r) => r && r.includes("@"));
@@ -80,10 +105,14 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
         status: res.status,
         detail,
       });
+      await logEmailFailure(params.subject, filtered, { status: res.status, detail });
       return;
     }
     console.log(`[email] sent to=${filtered.join(",")} subject="${params.subject}"`);
   } catch (err) {
     console.error("[email] send threw", { to: filtered, subject: params.subject, err });
+    await logEmailFailure(params.subject, filtered, {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }

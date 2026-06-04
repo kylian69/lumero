@@ -73,6 +73,16 @@ export function categoryForEntity(entityType: string): LogCategory {
   return ENTITY_CATEGORY[entityType] ?? "GENERAL";
 }
 
+// Élève automatiquement le niveau des actions sensibles (audit) lorsque
+// l'appelant n'a pas précisé de niveau : suppressions, exports, changements de
+// rôle/permission, révocations… sont tracés en WARN par défaut.
+const SENSITIVE_ACTION =
+  /(^|_)(deleted?|removed?|purged?|revoked?|disabled?|exported?|archived?)($|_)|role_?change|permission|bulk_delete|impersonat/i;
+
+export function defaultLevelForAction(action: string): LogLevel {
+  return SENSITIVE_ACTION.test(action) ? "WARN" : "INFO";
+}
+
 /** Extrait l'adresse IP cliente depuis les en-têtes d'une requête. */
 export function ipFromRequest(req: Request): string | null {
   const fwd = req.headers.get("x-forwarded-for");
@@ -94,7 +104,7 @@ export async function recordLog(input: RecordLogInput): Promise<LoggedEvent | nu
     if (!exists) userId = null;
   }
 
-  const level: LogLevel = input.level ?? "INFO";
+  const level: LogLevel = input.level ?? defaultLevelForAction(input.action);
   const category: LogCategory =
     input.category ?? categoryForEntity(input.entityType);
   const ip = input.ip ?? (input.request ? ipFromRequest(input.request) : null);

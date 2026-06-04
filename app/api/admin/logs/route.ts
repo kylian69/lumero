@@ -30,7 +30,17 @@ const querySchema = z.object({
   to: z.string().datetime().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(50),
+  format: z.enum(["json", "csv"]).default("json"),
 });
+
+const CSV_MAX_ROWS = 10_000;
+
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const s =
+    typeof value === "object" ? JSON.stringify(value) : String(value);
+  return `"${s.replace(/"/g, '""')}"`;
+}
 
 export async function GET(req: Request) {
   const session = await getSession();
@@ -71,6 +81,53 @@ export async function GET(req: Request) {
       { user: { is: { email: contains } } },
       { user: { is: { name: contains } } },
     ];
+  }
+
+  if (f.format === "csv") {
+    const rows = await prisma.activityLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: CSV_MAX_ROWS,
+      include: { user: { select: { name: true, email: true } } },
+    });
+    const header = [
+      "createdAt",
+      "level",
+      "category",
+      "entityType",
+      "entityId",
+      "action",
+      "message",
+      "user",
+      "ip",
+      "userAgent",
+      "metadata",
+    ];
+    const lines = [header.join(",")];
+    for (const r of rows) {
+      lines.push(
+        [
+          csvCell(r.createdAt.toISOString()),
+          csvCell(r.level),
+          csvCell(r.category),
+          csvCell(r.entityType),
+          csvCell(r.entityId),
+          csvCell(r.action),
+          csvCell(r.message),
+          csvCell(r.user ? r.user.name || r.user.email : ""),
+          csvCell(r.ip),
+          csvCell(r.userAgent),
+          csvCell(r.metadata),
+        ].join(","),
+      );
+    }
+    const csv = "﻿" + lines.join("\r\n");
+    return new NextResponse(csv, {
+      headers: {
+        "content-type": "text/csv; charset=utf-8",
+        "content-disposition": `attachment; filename="logs-${new Date().toISOString().slice(0, 10)}.csv"`,
+      },
+    });
   }
 
   const [total, rows, byLevel, byCategory] = await Promise.all([
