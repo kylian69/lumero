@@ -47,7 +47,7 @@ Lumero ne collecte que les données strictement nécessaires aux finalités déc
 
 ### 2.3 Données que nous **ne collectons pas**
 
-Lumero ne collecte **pas** : données de localisation précise, données de santé, données bancaires (les paiements sont aujourd'hui réalisés par virement / facture, sans collecte de coordonnées bancaires sur la plateforme), données relatives à des mineurs (le service n'est pas destiné aux personnes de moins de 18 ans).
+Lumero ne collecte **pas** : données de localisation précise, données de santé, **données de carte bancaire** (les paiements en ligne sont traités par notre prestataire Stripe, certifié PCI-DSS : aucune coordonnée bancaire ne transite ni n'est stockée sur les serveurs de Lumero — nous ne conservons qu'un identifiant de transaction et le statut du paiement), données relatives à des mineurs (le service n'est pas destiné aux personnes de moins de 18 ans).
 
 Aucune donnée n'est utilisée pour de la publicité ciblée, du profilage automatisé, ou transmise à des courtiers de données.
 
@@ -72,6 +72,7 @@ Vos données ne sont accessibles qu'aux personnes habilitées chez Lumero (l'éd
 | Sous-traitant | Rôle | Données concernées | Localisation |
 |---|---|---|---|
 | **Brevo** (Sendinblue SAS) | Envoi d'emails transactionnels | Email destinataire, contenu de l'email, pièces jointes éventuelles | Union européenne (France) |
+| **Stripe** (Stripe Payments Europe Ltd) | Traitement des paiements en ligne et émission des factures | Nom, email, montant, identifiants de transaction et de carte (collectés et conservés directement par Stripe, jamais par Lumero) | Irlande (UE) / États-Unis — Clauses contractuelles types |
 | **GitHub** (GitHub Inc., filiale Microsoft) | Hébergement des dépôts de code des sites clients | Nom du projet, slug, contenu généré du site (sans données personnelles des visiteurs) | États-Unis — Clauses contractuelles types |
 | **Vercel** (Vercel Inc.) | Déploiement et prévisualisation des sites clients | Identifiants de projet, URL de déploiement, métadonnées techniques | États-Unis — Clauses contractuelles types |
 | **Hébergeur de la plateforme Lumero** | Hébergement de la base de données et des fichiers téléversés | Ensemble des données de la plateforme | Union européenne — *[À COMPLÉTER une fois l'hébergeur sélectionné]* |

@@ -35,6 +35,7 @@ export default async function PortalLayout({
       icon: "Sparkles",
     },
     { label: "Abonnement", href: "/portal/subscription", icon: "CreditCard" },
+    { label: "Facturation", href: "/portal/billing", icon: "Receipt" },
     {
       label: "Support",
       href: "/portal/support",

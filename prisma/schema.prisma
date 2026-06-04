@@ -31,6 +31,7 @@ model User {
   phone           String?
   role            Role      @default(CLIENT)
   emailVerified   DateTime?
+  stripeCustomerId String?  @unique
   twoFactorSecret String?
   twoFactorEnabled Boolean  @default(false)
   mustChangePassword Boolean @default(false)
@@ -54,6 +55,8 @@ model User {
   invitations     Invitation[]          @relation("InvitedUser")
   invitationsSent Invitation[]          @relation("InvitationAuthor")
   passwordResetTokens PasswordResetToken[]
+  payments        Payment[]
+  invoices        Invoice[]
 }
 
 model SignupToken {
@@ -295,6 +298,12 @@ model Project {
   customizations  CustomizationRequest[]
   tickets         SupportTicket[]
   previewAccess   PreviewAccess[]
+  payments        Payment[]
+  invoices        Invoice[]
+
+  // Paiement du setup (achat unique du site).
+  // setupPaidAt est renseigné quand le paiement Stripe est confirmé.
+  setupPaidAt     DateTime?
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -342,13 +351,116 @@ model Subscription {
   monthlyAmount  Int                // centimes
   currency       String             @default("EUR")
 
+  // Stripe (vide tant que le paiement n'est pas branché / mode manuel)
+  stripeSubscriptionId String?      @unique
+  stripePriceId        String?
+  cancelAtPeriodEnd    Boolean      @default(false)
+
   currentPeriodStart DateTime       @default(now())
   currentPeriodEnd   DateTime
   canceledAt     DateTime?
 
+  invoices       Invoice[]
+
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
+  @@index([projectId])
+  @@index([status])
+}
+
+// ──────────────────────────────────────────────────────────────
+// Paiement & facturation
+// ──────────────────────────────────────────────────────────────
+
+enum PaymentKind {
+  SETUP        // achat unique du site
+  SUBSCRIPTION // échéance d'abonnement mensuel
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING      // session de paiement créée, en attente
+  PROCESSING   // paiement en cours de traitement (ex: SEPA)
+  PAID
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
+// Un paiement déclenché côté Lumero (Stripe Checkout / facture Stripe).
+// Aucune donnée de carte n'est stockée ici — uniquement les identifiants Stripe.
+model Payment {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  kind        PaymentKind   @default(SETUP)
+  status      PaymentStatus @default(PENDING)
+  amount      Int           // centimes TTC
+  currency    String        @default("EUR")
+  description String?
+
+  stripeCheckoutSessionId String? @unique
+  stripePaymentIntentId   String? @unique
+
+  invoice     Invoice?
+
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+}
+
+// Facture interne (couche portail/historique). Pour les abonnements, elle
+// reflète la facture Stripe (PDF conforme généré par Stripe). Numérotation
+// séquentielle continue, conforme aux obligations comptables françaises.
+model Invoice {
+  id             String        @id @default(cuid())
+  number         String        @unique // ex: LUM-2026-000001
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId      String?
+  project        Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  paymentId      String?       @unique
+  payment        Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  kind        PaymentKind   @default(SETUP)
+  status      InvoiceStatus @default(PAID)
+
+  amountHt    Int           // centimes HT
+  taxAmount   Int           @default(0) // TVA en centimes
+  taxRate     Int           @default(0) // points de base (2000 = 20 %)
+  amount      Int           // centimes TTC
+  currency    String        @default("EUR")
+  description String?
+
+  stripeInvoiceId  String?  @unique
+  hostedInvoiceUrl String?
+  pdfUrl           String?
+
+  periodStart DateTime?
+  periodEnd   DateTime?
+  issuedAt    DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId])
   @@index([projectId])
   @@index([status])
 }
