@@ -461,3 +461,67 @@ export function invoiceIssuedTemplate(args: {
   const text = `Votre facture ${args.number} (${formatEUR(args.amountCents)}) est disponible dans votre espace client : ${portalUrl}`;
   return { subject, html, text };
 }
+
+// ───────────────────────── Alertes (déclencheurs) ─────────────────────────
+
+function alertRows(rows: Record<string, string | null | undefined>): string {
+  const items = Object.entries(rows)
+    .filter(([, v]) => v != null && v !== "")
+    .map(([k, v]) => `<li><strong>${escape(k)} :</strong> ${escape(String(v))}</li>`)
+    .join("");
+  return items ? `<ul>${items}</ul>` : "";
+}
+
+export function securityAlertTemplate(args: {
+  title: string;
+  summary: string;
+  details?: Record<string, string | null | undefined>;
+}): Template {
+  const subject = `🔒 Alerte sécurité — ${args.title}`;
+  const html = layout(
+    subject,
+    `<p style="color:#b91c1c;font-weight:bold;">${escape(args.summary)}</p>
+     ${args.details ? alertRows(args.details) : ""}
+     <p style="color:#666;font-size:13px;">Consultez les journaux pour le détail des évènements.</p>`,
+    `${appUrl()}/admin/logs`,
+    "Ouvrir les journaux",
+  );
+  const text = `[Alerte sécurité] ${args.title}\n${args.summary}`;
+  return { subject, html, text };
+}
+
+export function paymentAlertTemplate(args: {
+  title: string;
+  summary: string;
+  details?: Record<string, string | null | undefined>;
+}): Template {
+  const subject = `💳 Alerte paiement — ${args.title}`;
+  const html = layout(
+    subject,
+    `<p style="color:#b45309;font-weight:bold;">${escape(args.summary)}</p>
+     ${args.details ? alertRows(args.details) : ""}`,
+    `${appUrl()}/admin/logs?category=BILLING`,
+    "Voir les journaux de facturation",
+  );
+  const text = `[Alerte paiement] ${args.title}\n${args.summary}`;
+  return { subject, html, text };
+}
+
+export function adminNotificationTemplate(args: {
+  title: string;
+  summary: string;
+  details?: Record<string, string | null | undefined>;
+  ctaUrl?: string;
+  ctaLabel?: string;
+}): Template {
+  const subject = `🔔 ${args.title}`;
+  const html = layout(
+    subject,
+    `<p>${escape(args.summary)}</p>
+     ${args.details ? alertRows(args.details) : ""}`,
+    args.ctaUrl ?? `${appUrl()}/admin/logs`,
+    args.ctaLabel ?? "Ouvrir la console",
+  );
+  const text = `${args.title}\n${args.summary}`;
+  return { subject, html, text };
+}
