@@ -10,6 +10,13 @@
 # JSON is mounted at the path below (see docker-compose.staging.yml).
 #
 # Order matters: specific hostnames first, catch-all last.
+#
+# IMPORTANT — actual routing is dashboard-managed. In practice this tunnel
+# receives a remotely-managed configuration from the Cloudflare dashboard
+# (cloudflared logs "Updated to new configuration version=N"), which OVERRIDES
+# the ingress declared here. Single-hostname routes (e.g. Grafana on
+# logs-dev.lumero.fr → grafana:3000) must therefore be added as Public
+# Hostnames in the dashboard, not here. This file is kept as reference / fallback.
 
 credentials-file: /etc/cloudflared/credentials.json
 
@@ -20,10 +27,6 @@ ingress:
     service: http://deploy-agent:9000
   - hostname: preview-webhook-dev.lumero.fr
     service: http://preview-orchestrator:8080
-  # Console d'observabilité (Grafana). À protéger par Cloudflare Access (Zero
-  # Trust) côté dashboard pour ne pas exposer le panneau publiquement.
-  - hostname: logs-dev.lumero.fr
-    service: http://grafana:3000
   # Catch-all: every dynamically-created preview hostname (slug-id6-preview-dev
   # .lumero.fr) lands here. The orchestrator dispatches by Host header to the
   # matching preview container.

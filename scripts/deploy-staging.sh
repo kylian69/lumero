@@ -107,11 +107,9 @@ docker compose -p "$PROJECT" -f docker-compose.staging.yml up -d --no-deps --for
 echo "[deploy-staging] Ensuring observability stack (loki/promtail/grafana)"
 docker compose -p "$PROJECT" -f docker-compose.staging.yml up -d loki promtail grafana
 
-# The staging tunnel is file-managed (docker/cloudflared/config.staging.yml).
-# cloudflared does NOT hot-reload a mounted config, so force-recreate it to pick
-# up ingress changes (e.g. the logs-dev.lumero.fr → grafana route).
-echo "[deploy-staging] Reloading cloudflared ingress"
-docker compose -p "$PROJECT" -f docker-compose.staging.yml up -d --no-deps --force-recreate cloudflared
+# Note: the staging tunnel is managed remotely (Cloudflare dashboard), so the
+# Grafana route (logs-dev.lumero.fr → grafana:3000) is a Public Hostname added
+# in the dashboard — no cloudflared restart needed here.
 
 notify_discord "✅ Déploiement staging terminé" \
   "Commit \`${SHORT_SHA}\` est en ligne sur l'environnement de test." \

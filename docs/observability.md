@@ -67,15 +67,27 @@ Grafana peut être servi sur un sous-domaine dédié **sans ouvrir de port** sur
 l'hôte : cloudflared (déjà présent) route le trafic vers `grafana:3000` sur le
 réseau Docker interne.
 
-- **Prod** (`logs.lumero.fr`) — le tunnel est managé par token, donc la route
-  s'ajoute dans le **dashboard Cloudflare Zero Trust** :
-  `Networks → Tunnels → (tunnel Lume) → Public Hostnames → Add` →
-  hostname `logs.lumero.fr`, service `HTTP` → `grafana:3000`.
-  Puis renseigner `GRAFANA_ROOT_URL=https://logs.lumero.fr` dans le `.env`.
-- **Staging** (`logs-dev.lumero.fr`) — déjà déclaré en ingress dans
-  `docker/cloudflared/config.staging.yml`. Il reste à créer l'enregistrement
-  DNS CNAME `logs-dev` → `<tunnel-id>.cfargotunnel.com` (proxied) et à poser
-  `GRAFANA_ROOT_URL=https://logs-dev.lumero.fr`.
+> **Les deux tunnels (prod ET staging) sont gérés à distance via le dashboard
+> Cloudflare.** Même le tunnel staging — malgré son fichier
+> `config.staging.yml` — reçoit une configuration remotely-managed qui prime sur
+> le fichier (cloudflared logue `Updated to new configuration version=N`). Les
+> routes mono-hostname comme Grafana s'ajoutent donc **dans le dashboard**, pas
+> dans le fichier.
+
+Pour chaque environnement :
+
+1. **Ajouter le Public Hostname** dans le dashboard :
+   `Zero Trust → Networks → Tunnels → (le bon tunnel) → Public Hostnames → Add` :
+   - Prod : subdomain `logs`, domain `lumero.fr`, service `HTTP` → `grafana:3000`
+   - Staging : subdomain `logs-dev`, domain `lumero.fr`, service `HTTP` → `grafana:3000`
+
+   Le DNS est créé automatiquement par cette manip (pas de CNAME à créer à la main).
+2. **Renseigner le `.env`** de l'hôte concerné :
+   - Prod : `GRAFANA_ROOT_URL=https://logs.lumero.fr` (+ `GRAFANA_ADMIN_PASSWORD`)
+   - Staging : `GRAFANA_ROOT_URL=https://logs-dev.lumero.fr` (+ `GRAFANA_ADMIN_PASSWORD`)
+3. **S'assurer que la stack tourne** sur l'hôte (`grafana`/`loki`/`promtail`) —
+   démarrée automatiquement par les scripts de déploiement, ou manuellement :
+   `docker compose -f docker-compose.<env>.yml up -d loki promtail grafana`.
 
 > **⚠️ Sécurité — fortement recommandé.** Exposer Grafana sur internet ne doit
 > pas reposer uniquement sur son login. Protéger le sous-domaine avec
