@@ -1,3 +1,4 @@
+import { Linkedin } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ManageCookiesLink } from "@/components/cookie-consent/manage-cookies-link";
 import { VersionTag } from "@/components/sections/version-tag";
@@ -12,6 +13,16 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             Website-as-a-Service. Déployez. Brillez.
           </p>
+          <a
+            href="https://www.linkedin.com/company/lumero-fr"
+            target="_blank"
+            rel="noopener"
+            aria-label="Lumero sur LinkedIn"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <Linkedin className="h-4 w-4" aria-hidden="true" />
+            LinkedIn
+          </a>
         </div>
         <nav aria-label="Pied de page">
           <ul className="flex flex-wrap gap-6 text-sm text-muted-foreground">

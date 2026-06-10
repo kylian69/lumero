@@ -26,6 +26,7 @@ export function GET() {
 - **Catégorie** : SaaS / Website-as-a-Service / Création de site internet
 - **Public** : TPE, PME, artisans, restaurateurs, consultants, indépendants
 - **Année de fondation** : 2024
+- **LinkedIn** : https://www.linkedin.com/company/lumero-fr
 
 ## Proposition de valeur
 
