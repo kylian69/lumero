@@ -56,6 +56,11 @@ ssh -L 3001:127.0.0.1:3001 user@serveur
 # puis ouvrir http://localhost:3001  (identifiants GRAFANA_ADMIN_*)
 ```
 
+> **Staging** : la même stack est présente dans `docker-compose.staging.yml`,
+> isolée (réseau `lume-staging`, volumes `*-staging`) et exposée sur le port
+> `127.0.0.1:3002` pour pouvoir cohabiter avec la prod sur la même VM :
+> `ssh -L 3002:127.0.0.1:3002 user@serveur` → `http://localhost:3002`.
+
 La source de données Loki est provisionnée automatiquement
 (`docker/grafana/provisioning/`). Exemples de requêtes LogQL dans Grafana →
 Explore :

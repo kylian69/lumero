@@ -133,6 +133,9 @@ services:
       IDLE_SHUTDOWN_DAYS: 3
       MAIN_APP_INTERNAL_URL: http://app:3000
       MAIN_APP_PUBLIC_URL: ${NEXT_PUBLIC_APP_URL:-https://dev.lumero.fr}
+      # Active la purge planifiée des journaux (appel à /api/cron/purge-logs).
+      # Doit être identique au CRON_SECRET de l'app (.env).
+      CRON_SECRET: ${CRON_SECRET:-}
       # Per-preview DNS automation (staging only): the orchestrator creates a
       # proxied CNAME per preview pointing at the staging tunnel, since this
       # tunnel can't own the *.lumero.fr wildcard (prod does).
@@ -150,6 +153,71 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # ─── Observabilité : logs centralisés et consultables hors de l'app ───────
+  # Miroir staging de la stack de prod (Loki + Promtail + Grafana). Isolée du
+  # réseau/volumes/port de prod pour pouvoir cohabiter sur la même VM.
+  loki:
+    image: grafana/loki:3.2.0
+    container_name: lume-loki-staging
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./docker/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data-staging:/loki
+    networks:
+      - lume-staging
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  promtail:
+    image: grafana/promtail:3.2.0
+    container_name: lume-promtail-staging
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./docker/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail-data-staging:/tmp
+    networks:
+      - lume-staging
+    depends_on:
+      - loki
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: lume-grafana-staging
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?missing}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data-staging:/var/lib/grafana
+    # Port hôte distinct de la prod (3001) pour cohabiter sur la même VM.
+    #   ssh -L 3002:127.0.0.1:3002 user@serveur  →  http://localhost:3002
+    ports:
+      - "127.0.0.1:3002:3000"
+    networks:
+      - lume-staging
+    depends_on:
+      - loki
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
 networks:
   lume-staging:
     driver: bridge
@@ -157,3 +225,6 @@ networks:
 volumes:
   postgres-data-staging:
   preview-orchestrator-data-staging:
+  loki-data-staging:
+  promtail-data-staging:
+  grafana-data-staging:
