@@ -18,6 +18,7 @@ import {
   CreditCard,
   Receipt,
   UserCircle,
+  ScrollText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo } from "@/components/logo";
@@ -36,6 +37,7 @@ const iconMap: Record<string, LucideIcon> = {
   CreditCard,
   Receipt,
   UserCircle,
+  ScrollText,
 };
 
 export type NavItem = {

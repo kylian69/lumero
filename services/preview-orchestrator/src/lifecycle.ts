@@ -10,6 +10,7 @@ import {
 } from "./docker";
 import { config } from "./config";
 import { deleteDnsRecord } from "./cloudflare";
+import { centralLog } from "./central-log";
 import fs from "node:fs";
 
 /**
@@ -49,10 +50,27 @@ export async function buildAndStart(preview: PreviewRow) {
     });
 
     console.log(`[lifecycle] ${preview.slug}: built & started (sha=${sha.slice(0, 7)})`);
+    centralLog({
+      category: "PROJECT",
+      entityType: "preview",
+      entityId: preview.slug,
+      action: "preview_built",
+      message: `Preview ${preview.slug} construite et démarrée`,
+      metadata: { sha, hostname: preview.hostname },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[lifecycle] ${preview.slug}: build failed → ${message}`);
     storage.update(preview.id, { state: "ERROR", errorMessage: message });
+    centralLog({
+      level: "ERROR",
+      category: "PROJECT",
+      entityType: "preview",
+      entityId: preview.slug,
+      action: "preview_build_failed",
+      message: `Échec de construction de la preview ${preview.slug}`,
+      metadata: { error: message },
+    });
     throw err;
   }
 }
@@ -92,6 +110,13 @@ export async function stop(preview: PreviewRow) {
   await stopContainerIfRunning(containerNameForSlug(preview.slug));
   storage.update(preview.id, { state: "STOPPED" });
   console.log(`[lifecycle] ${preview.slug}: stopped`);
+  centralLog({
+    category: "PROJECT",
+    entityType: "preview",
+    entityId: preview.slug,
+    action: "preview_stopped",
+    message: `Preview ${preview.slug} arrêtée`,
+  });
 }
 
 export async function destroy(preview: PreviewRow) {
@@ -102,6 +127,14 @@ export async function destroy(preview: PreviewRow) {
   await deleteDnsRecord(preview.hostname);
   storage.delete(preview.id);
   console.log(`[lifecycle] ${preview.slug}: destroyed`);
+  centralLog({
+    level: "WARN",
+    category: "PROJECT",
+    entityType: "preview",
+    entityId: preview.slug,
+    action: "preview_destroyed",
+    message: `Preview ${preview.slug} détruite`,
+  });
 }
 
 /**

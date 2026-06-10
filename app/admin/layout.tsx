@@ -49,6 +49,7 @@ export default async function AdminLayout({
     },
     { label: "Facturation", href: "/admin/billing", icon: "Receipt" },
     { label: "Utilisateurs", href: "/admin/team", icon: "UserCog" },
+    { label: "Journaux", href: "/admin/logs", icon: "ScrollText" },
     { label: "Mon compte", href: "/admin/settings", icon: "UserCircle" },
   ];
 

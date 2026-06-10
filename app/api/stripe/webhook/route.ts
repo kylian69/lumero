@@ -29,6 +29,15 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(body, sig ?? "", secret);
   } catch (err) {
     console.error("[stripe] signature invalide", err);
+    await logActivity({
+      level: "SECURITY",
+      category: "BILLING",
+      entityType: "system",
+      entityId: "stripe-webhook",
+      action: "stripe_signature_invalid",
+      message: "Signature de webhook Stripe invalide",
+      metadata: { error: err instanceof Error ? err.message : String(err) },
+    });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -52,6 +61,18 @@ export async function POST(req: Request) {
     }
   } catch (err) {
     console.error(`[stripe] erreur de traitement ${event.type}`, err);
+    await logActivity({
+      level: "ERROR",
+      category: "BILLING",
+      entityType: "system",
+      entityId: "stripe-webhook",
+      action: "stripe_webhook_error",
+      message: `Échec de traitement du webhook Stripe (${event.type})`,
+      metadata: {
+        eventType: event.type,
+        error: err instanceof Error ? err.message : String(err),
+      },
+    });
     return NextResponse.json({ error: "Handler error" }, { status: 500 });
   }
 
@@ -175,6 +196,25 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
   await prisma.subscription.updateMany({
     where: { stripeSubscriptionId: subId },
     data: { status: "PAST_DUE" },
+  });
+
+  const sub = await prisma.subscription.findUnique({
+    where: { stripeSubscriptionId: subId },
+    include: { project: { select: { id: true, userId: true } } },
+  });
+  await logActivity({
+    userId: sub?.project.userId ?? null,
+    level: "ERROR",
+    category: "BILLING",
+    entityType: "subscription",
+    entityId: sub?.id ?? subId,
+    action: "invoice_payment_failed",
+    message: "Échec de paiement d'une facture d'abonnement",
+    metadata: {
+      stripeInvoiceId: invoice.id,
+      amount: invoice.amount_due,
+      stripeSubscriptionId: subId,
+    },
   });
 }
 

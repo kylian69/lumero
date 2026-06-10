@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { recordLog, type RecordLogInput } from "@/lib/log";
 
 // Génère un mot de passe temporaire aléatoire
 export function generateTempPassword(length = 12) {
@@ -42,25 +43,12 @@ export async function ensureClientUser(params: {
   return { user, tempPassword };
 }
 
-export async function logActivity(params: {
-  userId?: string | null;
-  entityType: string;
-  entityId: string;
-  action: string;
-  metadata?: Record<string, unknown>;
-}) {
-  let userId = params.userId ?? null;
-  if (userId) {
-    const exists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-    if (!exists) userId = null;
-  }
-  await prisma.activityLog.create({
-    data: {
-      userId,
-      entityType: params.entityType,
-      entityId: params.entityId,
-      action: params.action,
-      metadata: params.metadata ? JSON.stringify(params.metadata) : null,
-    },
-  });
+/**
+ * Journalise une action métier. Conserve la signature historique tout en
+ * acceptant les champs enrichis (level, category, message, ip, userAgent,
+ * request). Délègue au pipeline centralisé lib/log.ts (persistance + console
+ * structurée + déclencheurs).
+ */
+export async function logActivity(params: RecordLogInput) {
+  await recordLog(params);
 }

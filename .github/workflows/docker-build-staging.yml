@@ -14,7 +14,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -30,7 +30,10 @@ jobs:
           # The version is derived from the develop branch, so make sure its
           # remote-tracking ref exists even when building another branch.
           git fetch --no-tags origin develop:refs/remotes/origin/develop || true
-          OUT=$(node scripts/compute-version.mjs)
+          # Make sure all existing semver tags are present so the rc.N counter
+          # picks up previous staging builds.
+          git fetch --tags --force origin || true
+          OUT=$(node scripts/compute-version.mjs --channel=staging)
           echo "version=$(echo "$OUT" | jq -r .version)" >> "$GITHUB_OUTPUT"
           echo "commit=$(echo "$OUT"  | jq -r .commit)"  >> "$GITHUB_OUTPUT"
           echo "date=$(echo "$OUT"    | jq -r .date)"    >> "$GITHUB_OUTPUT"
@@ -91,6 +94,22 @@ jobs:
             APP_CHANNEL=staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Tag commit with pre-release version
+        if: success()
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          TAG="v${VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Staging release $TAG"
+          git push origin "$TAG"
 
       - name: Trigger staging deploy webhook
         if: vars.STAGING_DEPLOY_WEBHOOK_URL != ''

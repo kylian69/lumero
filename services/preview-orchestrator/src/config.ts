@@ -38,6 +38,12 @@ const schema = z.object({
   // login / access-request page.
   MAIN_APP_PUBLIC_URL: z.string().default("https://lumero.fr"),
 
+  // Optional log-retention cron: when CRON_SECRET is set, the orchestrator
+  // periodically calls the main app's /api/cron/purge-logs to enforce the log
+  // retention policy. Must match the app's CRON_SECRET.
+  CRON_SECRET: z.string().optional(),
+  LOG_PURGE_CRON: z.string().default("0 4 * * *"),
+
   // Optional per-preview DNS automation (used by staging, where the tunnel
   // can't own the *.lumero.fr wildcard). When all three are set, the
   // orchestrator creates/deletes a proxied CNAME per preview pointing at the
