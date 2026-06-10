@@ -48,7 +48,7 @@ export default function HomePage() {
         url: `${siteUrl}/#contact`,
       },
     ],
-    sameAs: [],
+    sameAs: ["https://www.linkedin.com/company/lumero-fr"],
   };
 
   const serviceJsonLd = {
