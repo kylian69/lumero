@@ -51,6 +51,7 @@ export default function HomePage() {
     sameAs: [
       "https://www.linkedin.com/company/lumero-fr",
       "https://x.com/lumerofr",
+      "https://share.google/Z4mHqMHtEZgPrQcyP",
     ],
   };
 
