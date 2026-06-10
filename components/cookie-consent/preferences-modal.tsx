@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Dialog } from "@/components/ui/dialog";
@@ -160,12 +161,12 @@ export function CookiePreferencesModal() {
 
         <p className="mt-4 text-xs text-muted-foreground">
           Vous pouvez modifier vos préférences à tout moment depuis le pied de page.{" "}
-          <a
+          <Link
             href="/politique-confidentialite"
             className="underline transition-colors hover:text-foreground"
           >
             Politique de confidentialité
-          </a>
+          </Link>
         </p>
       </div>
     </Dialog>

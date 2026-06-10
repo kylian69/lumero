@@ -39,6 +39,21 @@ on_error() {
 }
 trap on_error ERR
 
+# Reclaim disk: removes images no longer referenced by a container (including
+# stale :sha-xxxx tags), the BuildKit cache and stopped containers. The
+# preview-orchestrator is rebuilt on every deploy and its BuildKit cache
+# accumulates fast (native better-sqlite3 toolchain), filling the disk.
+# Safe by design — never touches named volumes (Postgres data is preserved).
+reclaim_disk() {
+  echo "[deploy] Reclaiming disk (unused images, build cache, stopped containers)"
+  docker image prune -af >/dev/null 2>&1 || true
+  docker builder prune -af >/dev/null 2>&1 || true
+  docker container prune -f >/dev/null 2>&1 || true
+}
+# Run on every exit (success OR failure) so a deploy that crashes mid-pull —
+# e.g. "no space left on device" — still frees space before the next attempt.
+trap reclaim_disk EXIT
+
 cd "${COMPOSE_PROJECT_DIR:-/workspace}"
 
 # Must target the same compose project that brought the stack up on the host,
@@ -64,6 +79,10 @@ notify_discord "🚀 Déploiement en cours" \
   "Commit \`${SHORT_SHA}\` — pull de l'image + redémarrage de \`lume-app\`." \
   3447003
 
+# Free space BEFORE pulling the new image so the extraction does not fail with
+# "no space left on device" on a disk clogged by previous deploys.
+reclaim_disk
+
 echo "[deploy] Project: $PROJECT  Image: $IMAGE"
 IMAGE="$IMAGE" docker compose -p "$PROJECT" -f docker-compose.prod.yml pull app
 
@@ -88,12 +107,6 @@ docker compose -p "$PROJECT" -f docker-compose.prod.yml up -d --no-deps --force-
 # Cloudflare Zero Trust dashboard).
 echo "[deploy] Ensuring observability stack (loki/promtail/grafana)"
 docker compose -p "$PROJECT" -f docker-compose.prod.yml up -d loki promtail grafana
-
-echo "[deploy] Reclaiming disk (dangling images + BuildKit cache)"
-docker image prune -f >/dev/null
-# The preview-orchestrator is rebuilt on every deploy and its BuildKit cache
-# accumulates fast (native better-sqlite3 toolchain), filling the disk. Cap it.
-docker builder prune -f >/dev/null
 
 # Invalidate Cloudflare edge cache so visitors see the new build immediately
 # instead of a stale HTML page held at the edge. Skipped silently if the env

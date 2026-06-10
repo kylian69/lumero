@@ -81,8 +81,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@lumero",
-    creator: "@lumero",
+    site: "@lumerofr",
+    creator: "@lumerofr",
     title: "Lumero — Site professionnel en 24h | Website-as-a-Service",
     description:
       "Plateforme française WaaS : site optimisé SEO, hébergé et livré en moins de 24 heures. À partir de 99€.",

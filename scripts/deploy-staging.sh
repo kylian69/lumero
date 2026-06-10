@@ -40,6 +40,19 @@ on_error() {
 }
 trap on_error ERR
 
+# Reclaim disk: removes images no longer referenced by a container (including
+# stale :sha-xxxx staging tags), the BuildKit cache and stopped containers.
+# Safe by design — never touches named volumes (Postgres data is preserved).
+reclaim_disk() {
+  echo "[deploy-staging] Reclaiming disk (unused images, build cache, stopped containers)"
+  docker image prune -af >/dev/null 2>&1 || true
+  docker builder prune -af >/dev/null 2>&1 || true
+  docker container prune -f >/dev/null 2>&1 || true
+}
+# Run on every exit (success OR failure) so a deploy that crashes mid-pull —
+# e.g. "no space left on device" — still frees space before the next attempt.
+trap reclaim_disk EXIT
+
 cd "${COMPOSE_PROJECT_DIR:-/workspace}"
 
 PROJECT="${COMPOSE_PROJECT_NAME:-lumero-staging}"
@@ -54,6 +67,10 @@ fi
 notify_discord "🧪 Déploiement staging en cours" \
   "Commit \`${SHORT_SHA}\` — pull de l'image + redémarrage de \`lume-app-staging\`." \
   10181046
+
+# Free space BEFORE pulling the new image so the extraction does not fail with
+# "no space left on device" on a disk clogged by previous deploys.
+reclaim_disk
 
 echo "[deploy-staging] Project: $PROJECT  Image: $IMAGE"
 IMAGE="$IMAGE" docker compose -p "$PROJECT" -f docker-compose.staging.yml pull app
@@ -95,10 +112,6 @@ docker compose -p "$PROJECT" -f docker-compose.staging.yml up -d loki promtail g
 # up ingress changes (e.g. the logs-dev.lumero.fr → grafana route).
 echo "[deploy-staging] Reloading cloudflared ingress"
 docker compose -p "$PROJECT" -f docker-compose.staging.yml up -d --no-deps --force-recreate cloudflared
-
-echo "[deploy-staging] Reclaiming disk (dangling images + BuildKit cache)"
-docker image prune -f >/dev/null
-docker builder prune -f >/dev/null
 
 notify_discord "✅ Déploiement staging terminé" \
   "Commit \`${SHORT_SHA}\` est en ligne sur l'environnement de test." \
