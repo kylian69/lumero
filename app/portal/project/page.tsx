@@ -155,7 +155,7 @@ export default async function PortalProjectPage({
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/40 bg-muted/30 px-5 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 bg-muted/30 px-5 py-3">
                   {p.githubRepoName && (
                     <PreviewControl
                       projectId={p.id}
