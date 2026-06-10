@@ -175,6 +175,9 @@ services:
       # Used to authorize preview visitors against the main app.
       MAIN_APP_INTERNAL_URL: http://app:3000
       MAIN_APP_PUBLIC_URL: https://lumero.fr
+      # Active la purge planifiée des journaux (appel à /api/cron/purge-logs).
+      # Doit être identique au CRON_SECRET de l'app (.env).
+      CRON_SECRET: ${CRON_SECRET:-}
     volumes:
       - preview-orchestrator-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
@@ -186,6 +189,74 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # ─── Observabilité : logs centralisés et consultables hors de l'app ───────
+  # Stack Loki + Promtail + Grafana, souveraine et gratuite. Promtail collecte
+  # le stdout de TOUS les conteneurs via le socket Docker et l'envoie à Loki ;
+  # Grafana fournit une UI d'analyse indépendante de l'application — donc
+  # consultable même si l'app et/ou Postgres sont à terre.
+  loki:
+    image: grafana/loki:3.2.0
+    container_name: lume-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./docker/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    networks:
+      - lume
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  promtail:
+    image: grafana/promtail:3.2.0
+    container_name: lume-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./docker/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail-data:/tmp
+    networks:
+      - lume
+    depends_on:
+      - loki
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: lume-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?missing}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    # Lié à la loopback de l'hôte uniquement : accès via tunnel SSH
+    #   ssh -L 3001:127.0.0.1:3001 user@serveur  →  http://localhost:3001
+    # Indépendant de Cloudflare/app, donc joignable même en cas de panne.
+    ports:
+      - "127.0.0.1:3001:3000"
+    networks:
+      - lume
+    depends_on:
+      - loki
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
 networks:
   lume:
     driver: bridge
@@ -195,3 +266,6 @@ volumes:
   postgres-backups:
   uptime-kuma-data:
   preview-orchestrator-data:
+  loki-data:
+  promtail-data:
+  grafana-data:
