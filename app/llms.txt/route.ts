@@ -1,4 +1,5 @@
 import { FAQ_FLAT } from "@/lib/faq-data";
+import { METIERS } from "@/lib/metiers-data";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -26,6 +27,8 @@ export function GET() {
 - **Catégorie** : SaaS / Website-as-a-Service / Création de site internet
 - **Public** : TPE, PME, artisans, restaurateurs, consultants, indépendants
 - **Année de fondation** : 2024
+- **LinkedIn** : https://www.linkedin.com/company/lumero-fr
+- **X (Twitter)** : https://x.com/lumerofr
 
 ## Proposition de valeur
 
@@ -65,6 +68,10 @@ Tous les prix sont en euros, paiement unique sans engagement. L'abonnement est o
 - Contact : ${siteUrl}/#contact
 - Mentions légales : ${siteUrl}/mentions-legales
 - Politique de confidentialité : ${siteUrl}/politique-confidentialite
+
+## Pages par métier
+
+${METIERS.map((m) => `- ${m.title} : ${siteUrl}/${m.slug}`).join("\n")}
 
 ## FAQ (résumé)
 
