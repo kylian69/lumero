@@ -81,6 +81,14 @@ docker compose -p "$PROJECT" -f docker-compose.prod.yml build preview-orchestrat
 echo "[deploy] Recreating preview-orchestrator container"
 docker compose -p "$PROJECT" -f docker-compose.prod.yml up -d --no-deps --force-recreate preview-orchestrator
 
+# Ensure the observability stack (Loki + Promtail + Grafana) is running. New
+# services are created on first deploy; existing ones are reconciled if their
+# definition changed. cloudflared ingress is dashboard-managed in prod, so no
+# restart is needed here (the Grafana Public Hostname is configured in the
+# Cloudflare Zero Trust dashboard).
+echo "[deploy] Ensuring observability stack (loki/promtail/grafana)"
+docker compose -p "$PROJECT" -f docker-compose.prod.yml up -d loki promtail grafana
+
 echo "[deploy] Reclaiming disk (dangling images + BuildKit cache)"
 docker image prune -f >/dev/null
 # The preview-orchestrator is rebuilt on every deploy and its BuildKit cache
