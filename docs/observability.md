@@ -61,6 +61,33 @@ ssh -L 3001:127.0.0.1:3001 user@serveur
 > `127.0.0.1:3002` pour pouvoir cohabiter avec la prod sur la même VM :
 > `ssh -L 3002:127.0.0.1:3002 user@serveur` → `http://localhost:3002`.
 
+#### Accès par URL publique (via Cloudflare Tunnel)
+
+Grafana peut être servi sur un sous-domaine dédié **sans ouvrir de port** sur
+l'hôte : cloudflared (déjà présent) route le trafic vers `grafana:3000` sur le
+réseau Docker interne.
+
+- **Prod** (`logs.lumero.fr`) — le tunnel est managé par token, donc la route
+  s'ajoute dans le **dashboard Cloudflare Zero Trust** :
+  `Networks → Tunnels → (tunnel Lume) → Public Hostnames → Add` →
+  hostname `logs.lumero.fr`, service `HTTP` → `grafana:3000`.
+  Puis renseigner `GRAFANA_ROOT_URL=https://logs.lumero.fr` dans le `.env`.
+- **Staging** (`logs-dev.lumero.fr`) — déjà déclaré en ingress dans
+  `docker/cloudflared/config.staging.yml`. Il reste à créer l'enregistrement
+  DNS CNAME `logs-dev` → `<tunnel-id>.cfargotunnel.com` (proxied) et à poser
+  `GRAFANA_ROOT_URL=https://logs-dev.lumero.fr`.
+
+> **⚠️ Sécurité — fortement recommandé.** Exposer Grafana sur internet ne doit
+> pas reposer uniquement sur son login. Protéger le sous-domaine avec
+> **Cloudflare Access** (Zero Trust → Access → Applications) : une politique
+> par email/OTP ou SSO place une authentification *devant* Grafana, de sorte
+> que le panneau n'est jamais joignable publiquement sans être identifié.
+
+> **Note de résilience.** L'URL publique dépend de cloudflared (indépendant de
+> l'app) : si seule l'app est en panne, l'accès web aux logs fonctionne. Si le
+> tunnel lui-même tombe, le **tunnel SSH** (`-L 3001`/`3002`) reste l'accès de
+> secours.
+
 La source de données Loki est provisionnée automatiquement
 (`docker/grafana/provisioning/`). Exemples de requêtes LogQL dans Grafana →
 Explore :
