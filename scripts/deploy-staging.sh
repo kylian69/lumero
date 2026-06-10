@@ -103,6 +103,16 @@ docker compose -p "$PROJECT" -f docker-compose.staging.yml build preview-orchest
 echo "[deploy-staging] Recreating preview-orchestrator container"
 docker compose -p "$PROJECT" -f docker-compose.staging.yml up -d --no-deps --force-recreate preview-orchestrator
 
+# Ensure the observability stack (Loki + Promtail + Grafana) is running.
+echo "[deploy-staging] Ensuring observability stack (loki/promtail/grafana)"
+docker compose -p "$PROJECT" -f docker-compose.staging.yml up -d loki promtail grafana
+
+# The staging tunnel is file-managed (docker/cloudflared/config.staging.yml).
+# cloudflared does NOT hot-reload a mounted config, so force-recreate it to pick
+# up ingress changes (e.g. the logs-dev.lumero.fr → grafana route).
+echo "[deploy-staging] Reloading cloudflared ingress"
+docker compose -p "$PROJECT" -f docker-compose.staging.yml up -d --no-deps --force-recreate cloudflared
+
 notify_discord "✅ Déploiement staging terminé" \
   "Commit \`${SHORT_SHA}\` est en ligne sur l'environnement de test." \
   3066993
