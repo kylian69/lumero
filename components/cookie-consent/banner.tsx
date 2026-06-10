@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,12 +29,12 @@ export function CookieBanner() {
                 <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
                   Certains cookies sont nécessaires au fonctionnement du site. D&apos;autres nous
                   aident à améliorer votre expérience et à analyser notre audience.{" "}
-                  <a
+                  <Link
                     href="/politique-confidentialite"
                     className="underline transition-colors hover:text-foreground"
                   >
                     En savoir plus
-                  </a>
+                  </Link>
                 </p>
               </div>
             </div>

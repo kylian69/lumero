@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { Linkedin } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { METIERS } from "@/lib/metiers-data";
 import { ManageCookiesLink } from "@/components/cookie-consent/manage-cookies-link";
 import { VersionTag } from "@/components/sections/version-tag";
 
@@ -42,9 +44,9 @@ export function Footer() {
               </a>
             </li>
             <li>
-              <a href="/faq" className="hover:text-foreground">
+              <Link href="/faq" className="hover:text-foreground">
                 FAQ
-              </a>
+              </Link>
             </li>
             <li>
               <a href="#contact" className="hover:text-foreground">
@@ -52,19 +54,33 @@ export function Footer() {
               </a>
             </li>
             <li>
-              <a href="/mentions-legales" className="hover:text-foreground">
+              <Link href="/mentions-legales" className="hover:text-foreground">
                 Mentions légales
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/politique-confidentialite" className="hover:text-foreground">
+              <Link href="/politique-confidentialite" className="hover:text-foreground">
                 Confidentialité
-              </a>
+              </Link>
             </li>
             <ManageCookiesLink />
           </ul>
         </nav>
       </div>
+      <nav aria-label="Sites par métier" className="container mt-10">
+        <h2 className="text-sm font-medium text-foreground">
+          Création de site internet par métier
+        </h2>
+        <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          {METIERS.map((m) => (
+            <li key={m.slug}>
+              <Link href={`/${m.slug}`} className="hover:text-foreground">
+                {m.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
       <p className="container mt-8 text-xs text-muted-foreground">
         © {new Date().getFullYear()} Lumero. Tous droits réservés.
       </p>

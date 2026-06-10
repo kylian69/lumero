@@ -1,9 +1,14 @@
 import type { MetadataRoute } from "next";
+import { METIERS } from "@/lib/metiers-data";
 
 const siteUrl = "https://lumero.fr";
 
+// Date de dernière modification réelle du contenu — à mettre à jour
+// lors des évolutions significatives des pages concernées.
+const lastContentUpdate = new Date("2026-06-10");
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
+  const now = lastContentUpdate;
 
   return [
     {
@@ -24,6 +29,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    ...METIERS.map((m) => ({
+      url: `${siteUrl}/${m.slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
     {
       url: `${siteUrl}/mentions-legales`,
       lastModified: now,

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -1199,16 +1200,16 @@ export function Questionnaire() {
                           {accountExists ? (
                             sessionStatus === "authenticated" ? (
                               <Button size="lg" asChild>
-                                <a href="/portal">Accéder à mon espace</a>
+                                <Link href="/portal">Accéder à mon espace</Link>
                               </Button>
                             ) : (
                               <Button size="lg" asChild>
-                                <a href="/login">Se connecter à mon espace</a>
+                                <Link href="/login">Se connecter à mon espace</Link>
                               </Button>
                             )
                           ) : (
                             <Button size="lg" asChild>
-                              <a href="/login">Se connecter</a>
+                              <Link href="/login">Se connecter</Link>
                             </Button>
                           )}
                           <Button

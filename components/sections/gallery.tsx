@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import * as React from "react";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -851,7 +852,7 @@ function TemplateOrderForm({
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           {!accountExists && tempPassword ? (
             <Button asChild>
-              <a href="/login">Se connecter</a>
+              <Link href="/login">Se connecter</Link>
             </Button>
           ) : null}
           <Button
