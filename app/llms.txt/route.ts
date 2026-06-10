@@ -29,6 +29,7 @@ export function GET() {
 - **Année de fondation** : 2024
 - **LinkedIn** : https://www.linkedin.com/company/lumero-fr
 - **X (Twitter)** : https://x.com/lumerofr
+- **Google Business Profile** : https://share.google/Z4mHqMHtEZgPrQcyP
 
 ## Proposition de valeur
 
